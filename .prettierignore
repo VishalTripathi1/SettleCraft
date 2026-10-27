@@ -1,0 +1,8 @@
+node_modules
+**/dist
+.local
+package-lock.json
+docs/BUILD_BRIEF.original.md
+docs/screenshots
+test-results
+playwright-report

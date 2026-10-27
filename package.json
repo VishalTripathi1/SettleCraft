@@ -1,0 +1,47 @@
+{
+  "name": "settlecraft",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web,worker 'npm run dev -w @settlecraft/api' 'npm run dev -w @settlecraft/web' 'npm run worker'",
+    "build": "npm run build -w @settlecraft/shared && npm run build -w @settlecraft/api && npm run build -w @settlecraft/web",
+    "typecheck": "tsc --noEmit -p apps/api && tsc --noEmit -p apps/web && tsc --noEmit -p packages/shared",
+    "lint": "eslint .",
+    "test": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run apps/api/tests --exclude **/health.test.ts",
+    "test:e2e": "playwright test",
+    "db:migrate": "tsx apps/api/src/db/migrate.ts",
+    "db:seed": "tsx apps/api/src/db/seed.ts",
+    "db:reset-demo": "tsx scripts/reset-demo.ts",
+    "db:start": "node scripts/local-db.mjs start",
+    "db:stop": "node scripts/local-db.mjs stop",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build",
+    "worker": "tsx apps/api/src/workers/outbox.ts",
+    "benchmark": "tsx scripts/benchmark.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.58.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^22.19.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.10",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "measuredAt": "2026-10-27T14:05:07.369Z",
+  "environment": {
+    "cpu": "Apple M1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "memoryGiB": 8,
+    "node": "v22.21.1",
+    "postgres": "15.19 (Homebrew)",
+    "transport": "loopback HTTP, Express auth+validation+PostgreSQL; warm local DB; no external clients"
+  },
+  "parameters": {
+    "users": 10,
+    "uniqueIntents": 100,
+    "concurrency": 10,
+    "duplicateRequests": 20,
+    "conflictingRequests": 10,
+    "amount": "INR 1.00"
+  },
+  "metrics": {
+    "elapsedMs": 244,
+    "httpRequests": 130,
+    "requestsPerSecond": 532.76,
+    "p50Ms": 11.44,
+    "p95Ms": 54.39,
+    "unexpectedErrors": 0,
+    "uniqueResponseIds": 100,
+    "transfers": 100,
+    "journals": 100,
+    "unbalancedJournals": 0,
+    "finalBalancePaise": "10000000",
+    "expectedBalancePaise": "10000000",
+    "minimumWalletPaise": "1000000"
+  }
+}
