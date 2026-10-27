@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 config({ quiet: true });
-if (!process.env.TEST_DATABASE_URL?.includes('settlecraft_test'))
+if (
+  !process.env.TEST_DATABASE_URL ||
+  new URL(process.env.TEST_DATABASE_URL).pathname !== '/settlecraft_test'
+)
   throw new Error('E2E requires the dedicated test database');
 export default defineConfig({
   testDir: './apps/web/e2e',
@@ -12,17 +15,25 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:5174',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    channel: 'chrome',
   },
   projects: [
     {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 1000 } },
+    },
+    {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
+      use: {
+        channel: 'chrome',
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 1000 },
+      },
     },
     {
       name: 'mobile',
       use: {
         ...devices['Pixel 7'],
+        channel: 'chrome',
         defaultBrowserType: 'chromium',
         viewport: { width: 360, height: 800 },
       },

@@ -8,7 +8,7 @@
 
 ## Run locally
 
-Prerequisites: Node **22.12+**, npm, PostgreSQL **15+** binaries on PATH. Tested on macOS with Node 22.21.1 and PostgreSQL 15.19. For automated browser tests, installed Google Chrome is used by default.
+Prerequisites: Node **22.12+**, npm, PostgreSQL **15+** binaries on PATH. Tested on macOS with Node 22.21.1 and PostgreSQL 15.19. For automated browser tests, install Google Chrome and the Playwright WebKit runtime (`npx playwright install webkit`).
 
 ```sh
 npm ci
@@ -58,7 +58,7 @@ New registrations have ₹0. Request demo funds under **Add demo funds**, then s
 
 ```sh
 npm run check              # lint, typecheck, unit, integration, build
-npm run test:e2e           # Chrome desktop + 360px mobile; own test servers
+npm run test:e2e           # Chrome desktop/mobile + WebKit; own test servers
 npm run benchmark         # bounded HTTP benchmark against settlecraft_test
 ```
 

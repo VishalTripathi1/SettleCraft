@@ -26,13 +26,11 @@ const limit = rateLimit({
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   handler: (_req, res) =>
-    res
-      .status(429)
-      .json({
-        code: 'RATE_LIMITED',
-        message: 'Too many attempts. Try again later.',
-        requestId: res.locals.requestId,
-      }),
+    res.status(429).json({
+      code: 'RATE_LIMITED',
+      message: 'Too many attempts. Try again later.',
+      requestId: res.locals.requestId,
+    }),
 });
 authRouter.post('/register', limit, async (req, res) => {
   const data = registerSchema.parse(req.body);

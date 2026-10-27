@@ -24,30 +24,28 @@ export const errors: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
           : tooLarge
             ? 413
             : 500;
-  res
-    .status(status)
-    .json({
-      code:
-        err instanceof ApiError
-          ? err.code
-          : validation
-            ? 'VALIDATION_ERROR'
-            : malformed
-              ? 'INVALID_JSON'
-              : tooLarge
-                ? 'BODY_TOO_LARGE'
-                : 'INTERNAL_ERROR',
-      message:
-        err instanceof ApiError
-          ? err.message
-          : validation
-            ? 'Check the submitted fields.'
-            : malformed
-              ? 'Request body must be valid JSON.'
-              : tooLarge
-                ? 'Request body exceeds 16 KB.'
-                : 'The request could not be completed.',
-      ...(validation ? { details: err.flatten() } : {}),
-      requestId: res.locals.requestId,
-    });
+  res.status(status).json({
+    code:
+      err instanceof ApiError
+        ? err.code
+        : validation
+          ? 'VALIDATION_ERROR'
+          : malformed
+            ? 'INVALID_JSON'
+            : tooLarge
+              ? 'BODY_TOO_LARGE'
+              : 'INTERNAL_ERROR',
+    message:
+      err instanceof ApiError
+        ? err.message
+        : validation
+          ? 'Check the submitted fields.'
+          : malformed
+            ? 'Request body must be valid JSON.'
+            : tooLarge
+              ? 'Request body exceeds 16 KB.'
+              : 'The request could not be completed.',
+    ...(validation ? { details: err.flatten() } : {}),
+    requestId: res.locals.requestId,
+  });
 };

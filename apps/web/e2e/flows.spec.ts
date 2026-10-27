@@ -99,10 +99,30 @@ test('public pages have no serious or critical accessibility violations', async 
   }
 });
 
-test('workspace accessibility has no serious or critical violations',async({page})=>{
- test.setTimeout(90000);
- await page.goto('/login');await page.getByRole('button',{name:'Admin',exact:true}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('heading',{name:'The bigger picture.'})).toBeVisible();
- const failures:unknown[]=[];
- for(const path of ['/app/dashboard','/app/send','/app/fund-demo','/app/settings','/admin/overview','/admin/reviews','/admin/integrity','/admin/risk-rules']){await page.goto(path);await page.locator('.page-heading').waitFor();const result=await new AxeBuilder({page}).analyze();for(const violation of result.violations.filter(v=>v.impact==='serious'||v.impact==='critical'))failures.push({path,id:violation.id,nodes:violation.nodes.map(n=>n.target)})}
- expect(failures).toEqual([]);
+test('workspace accessibility has no serious or critical violations', async ({ page }) => {
+  test.setTimeout(90000);
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'The bigger picture.' })).toBeVisible();
+  const failures: unknown[] = [];
+  for (const path of [
+    '/app/dashboard',
+    '/app/send',
+    '/app/fund-demo',
+    '/app/settings',
+    '/admin/overview',
+    '/admin/reviews',
+    '/admin/integrity',
+    '/admin/risk-rules',
+  ]) {
+    await page.goto(path);
+    await page.locator('.page-heading').waitFor();
+    const result = await new AxeBuilder({ page }).analyze();
+    for (const violation of result.violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    ))
+      failures.push({ path, id: violation.id, nodes: violation.nodes.map((n) => n.target) });
+  }
+  expect(failures).toEqual([]);
 });

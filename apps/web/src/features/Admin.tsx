@@ -545,8 +545,8 @@ export function Integrity() {
           <Empty title="No checks recorded yet" />
         )}
       </section>
-    <EventDeliveries />
-</>
+      <EventDeliveries />
+    </>
   );
 }
 export function RiskRules() {
@@ -616,8 +616,80 @@ export function RiskRules() {
 function EventDeliveries() {
   const query = useQuery({
     queryKey: ['events'],
-    queryFn: () => api<{ id: string; type: string; attempts: number; delivered_at: string | null; next_attempt_at: string; last_error: string | null; receipt_count: number }[]>('/admin/events'),
+    queryFn: () =>
+      api<
+        {
+          id: string;
+          type: string;
+          attempts: number;
+          delivered_at: string | null;
+          next_attempt_at: string;
+          last_error: string | null;
+          receipt_count: number;
+        }[]
+      >('/admin/events'),
     refetchInterval: 5000,
   });
-  return <section className="panel"><div className="panel-heading"><div><h2>Local event delivery</h2><p>Latest 30 outbox events · updates every five seconds · ten-attempt retry limit</p></div></div><ErrorBox error={query.error}/>{query.isPending?<Loading/>:query.data?.length?<div className="table-scroll" tabIndex={0} role="region" aria-label="Event deliveries"><table><thead><tr><th>Event</th><th>Delivery</th><th>Attempts</th><th>Receipts</th><th>Last error / next attempt</th></tr></thead><tbody>{query.data.map(event=><tr key={event.id}><td><strong>{event.type}</strong><small className="mono block">{event.id.slice(0,8)}</small></td><td><span className={`status ${event.delivered_at?'completed':event.attempts>=10?'failed':'pending_review'}`}>{event.delivered_at?'Delivered':event.attempts>=10?'Exhausted':'Pending'}</span></td><td>{event.attempts} / 10</td><td>{event.receipt_count}</td><td>{event.last_error??'—'}{!event.delivered_at&&event.attempts<10&&<small className="block">{date(event.next_attempt_at)}</small>}</td></tr>)}</tbody></table></div>:<Empty title="No events to deliver yet" text="Completed transfers, funding approvals and reversals create events atomically."/>}</section>;
+  return (
+    <section className="panel">
+      <div className="panel-heading">
+        <div>
+          <h2>Local event delivery</h2>
+          <p>Latest 30 outbox events · updates every five seconds · ten-attempt retry limit</p>
+        </div>
+      </div>
+      <ErrorBox error={query.error} />
+      {query.isPending ? (
+        <Loading />
+      ) : query.data?.length ? (
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Event deliveries">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Delivery</th>
+                <th>Attempts</th>
+                <th>Receipts</th>
+                <th>Last error / next attempt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data.map((event) => (
+                <tr key={event.id}>
+                  <td>
+                    <strong>{event.type}</strong>
+                    <small className="mono block">{event.id.slice(0, 8)}</small>
+                  </td>
+                  <td>
+                    <span
+                      className={`status ${event.delivered_at ? 'completed' : event.attempts >= 10 ? 'failed' : 'pending_review'}`}
+                    >
+                      {event.delivered_at
+                        ? 'Delivered'
+                        : event.attempts >= 10
+                          ? 'Exhausted'
+                          : 'Pending'}
+                    </span>
+                  </td>
+                  <td>{event.attempts} / 10</td>
+                  <td>{event.receipt_count}</td>
+                  <td>
+                    {event.last_error ?? '—'}
+                    {!event.delivered_at && event.attempts < 10 && (
+                      <small className="block">{date(event.next_attempt_at)}</small>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Empty
+          title="No events to deliver yet"
+          text="Completed transfers, funding approvals and reversals create events atomically."
+        />
+      )}
+    </section>
+  );
 }

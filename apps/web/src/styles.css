@@ -2261,7 +2261,28 @@ th {
   position: relative;
   max-width: 100%;
 }
-.badge,.ledger-person small,.flow-line span,.feature-grid p,.build-panel p,.health-card span,footer{color: #59687e}.ledger-foot>span:first-child{color: #28765f}
-.demo-logins small,.auth-alternate,.auth-form>.eyebrow{color: #5a6b84}.auth-form input::placeholder{color: #5d6b7e}
+.badge,
+.ledger-person small,
+.flow-line span,
+.feature-grid p,
+.build-panel p,
+.health-card span,
+footer {
+  color: #59687e;
+}
+.ledger-foot > span:first-child {
+  color: #28765f;
+}
+.demo-logins small,
+.auth-alternate,
+.auth-form > .eyebrow {
+  color: #5a6b84;
+}
+.auth-form input::placeholder {
+  color: #5d6b7e;
+}
 
-.auth-alternate a{text-decoration:underline;text-underline-offset:3px}
+.auth-alternate a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

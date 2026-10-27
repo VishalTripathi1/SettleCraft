@@ -120,7 +120,15 @@ export function Shell() {
             <span className="environment-tag">
               <i /> Demo environment
             </span>
-            <Link to="/app/settings" className="profile-avatar" aria-label={`${auth.user.name.split(' ').map(n=>n[0]).slice(0,2).join('')} — Account settings`}>
+            <Link
+              to="/app/settings"
+              className="profile-avatar"
+              aria-label={`${auth.user.name
+                .split(' ')
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join('')} — Account settings`}
+            >
               {auth.user.name
                 .split(' ')
                 .map((n) => n[0])

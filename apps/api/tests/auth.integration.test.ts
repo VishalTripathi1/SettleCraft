@@ -48,14 +48,12 @@ it('registers an empty wallet, rotates refresh tokens, detects replay, and revok
 it('rejects passwords and role injection', async () => {
   expect(
     (
-      await request(app)
-        .post('/api/v1/auth/register')
-        .send({
-          name: 'Test User',
-          email: 'invalid@example.com',
-          password: 'test-password-1234',
-          role: 'ADMIN',
-        })
+      await request(app).post('/api/v1/auth/register').send({
+        name: 'Test User',
+        email: 'invalid@example.com',
+        password: 'test-password-1234',
+        role: 'ADMIN',
+      })
     ).status,
   ).toBe(422);
   expect(

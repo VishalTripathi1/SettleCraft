@@ -59,13 +59,11 @@ export function createApp() {
       standardHeaders: 'draft-8',
       legacyHeaders: false,
       handler: (_req, res) =>
-        res
-          .status(429)
-          .json({
-            code: 'RATE_LIMITED',
-            message: 'Too many requests. Try again shortly.',
-            requestId: res.locals.requestId,
-          }),
+        res.status(429).json({
+          code: 'RATE_LIMITED',
+          message: 'Too many requests. Try again shortly.',
+          requestId: res.locals.requestId,
+        }),
     }),
   );
   app.use((req, _res, next) => {
@@ -94,13 +92,11 @@ export function createApp() {
       await pool.query('SELECT 1');
       res.json({ status: 'ok', database: 'connected' });
     } catch {
-      res
-        .status(503)
-        .json({
-          code: 'DATABASE_UNAVAILABLE',
-          message: 'Database is unavailable.',
-          requestId: res.locals.requestId,
-        });
+      res.status(503).json({
+        code: 'DATABASE_UNAVAILABLE',
+        message: 'Database is unavailable.',
+        requestId: res.locals.requestId,
+      });
     }
   });
   app.use('/api/v1', domainRouter);

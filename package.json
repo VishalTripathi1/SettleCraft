@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit -p apps/api && tsc --noEmit -p apps/web && tsc --noEmit -p packages/shared",
     "lint": "eslint .",
     "test": "vitest run --exclude '**/*.integration.test.ts'",
-    "test:integration": "vitest run apps/api/tests --exclude **/health.test.ts",
+    "test:integration": "vitest run apps/api/tests/*.integration.test.ts",
     "test:e2e": "playwright test",
     "db:migrate": "tsx apps/api/src/db/migrate.ts",
     "db:seed": "tsx apps/api/src/db/seed.ts",
