@@ -43,7 +43,7 @@ it('shows an honest empty state without invented transfers', () => {
       <TransactionsTable items={[]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText('Your next chapter starts here')).toBeTruthy();
+  expect(screen.getByText('No transactions yet')).toBeTruthy();
   expect(screen.queryByRole('table')).toBeNull();
 });
 it('formats paise exactly above Number.MAX_SAFE_INTEGER', () => {

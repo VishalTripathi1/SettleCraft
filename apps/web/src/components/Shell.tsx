@@ -1,3 +1,5 @@
+import { IncomingPayment } from './IncomingPayment';
+import { Brand } from './Brand';
 import { useState } from 'react';
 import { NavLink, Link, Outlet, Navigate, useLocation } from 'react-router-dom';
 import {
@@ -11,7 +13,6 @@ import {
   Activity,
   SlidersHorizontal,
   LogOut,
-  Layers3,
   Menu,
   X,
   ChevronRight,
@@ -46,13 +47,9 @@ export function Shell() {
   const title = links.find((l) => location.pathname.startsWith(l[0]))?.[1] ?? 'Transaction details';
   return (
     <div className="app-layout">
+      <IncomingPayment key={auth.user.id} userId={auth.user.id} />
       <aside className={`sidebar ${open ? 'open' : ''}`}>
-        <Link className="brand" to="/">
-          <span className="brand-icon">
-            <Layers3 size={21} />
-          </span>
-          SettleCraft<span className="brand-dot">.</span>
-        </Link>
+        <Brand />
         <button
           className="mobile-close icon-button"
           aria-label="Close navigation"
@@ -60,9 +57,7 @@ export function Shell() {
         >
           <X />
         </button>
-        <div className="workspace-label">
-          {isAdmin ? 'OPERATIONS WORKSPACE' : 'PERSONAL WORKSPACE'}
-        </div>
+        <div className="workspace-label">{isAdmin ? 'Operations' : 'Your workspace'}</div>
         <nav>
           {links.map(([to, label, Icon]) => (
             <NavLink to={to} onClick={() => setOpen(false)} key={to}>
@@ -72,16 +67,6 @@ export function Shell() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="sandbox-card">
-            <ShieldCheck size={19} />
-            <strong>A safe space to explore</strong>
-            <p>
-              All balances are simulated.
-              <br />
-              No real money, ever.
-            </p>
-            <span>LOCAL DEMO ENVIRONMENT</span>
-          </div>
           {auth.user.role === 'ADMIN' && (
             <Link className="workspace-switch" to={isAdmin ? '/app/dashboard' : '/admin/overview'}>
               {isAdmin ? 'Open personal wallet' : 'Open operations'} <ArrowUpRight size={15} />
@@ -112,13 +97,13 @@ export function Shell() {
             <Menu />
           </button>
           <div className="breadcrumbs">
-            {isAdmin ? 'Operations' : 'Workspace'}
+            {isAdmin ? 'Admin' : 'Personal'}
             <ChevronRight size={12} />
             <strong>{title}</strong>
           </div>
           <div className="header-right">
             <span className="environment-tag">
-              <i /> Demo environment
+              <i /> Local demo
             </span>
             <Link
               to="/app/settings"
@@ -139,13 +124,17 @@ export function Shell() {
         </header>
         <div className="app-main">
           <div className="simulation-banner">
-            <ShieldCheck size={14} /> Demo / simulated funds — no real money <span>INR wallet</span>
+            <ShieldCheck size={14} /> Simulated INR wallet. No real money.
+            <span>Local environment</span>
           </div>
           <ErrorBox error={error} />
-          <Outlet />
+          <div key={location.pathname} className="route-transition">
+            <Outlet />
+          </div>
         </div>
         <div className="app-footer">
-          Every movement accounted for.<span>SettleCraft · Local demo</span>
+          <span>SettleCraft</span>
+          <span>Demo / simulated funds — no real money</span>
         </div>
       </div>
     </div>

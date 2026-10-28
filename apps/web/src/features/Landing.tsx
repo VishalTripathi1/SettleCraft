@@ -1,174 +1,172 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowUpRight,
-  ArrowRight,
-  ShieldCheck,
-  Layers3,
-  GitBranch,
-  Activity,
-  Check,
-} from 'lucide-react';
-import { PRODUCT_NAME, DEMO_NOTICE } from '@settlecraft/shared';
+import { ArrowUpRight, ArrowRight, Check, RefreshCw } from 'lucide-react';
+import { Brand } from '../components/Brand';
 export function Landing() {
   const health = useQuery({
     queryKey: ['health'],
     queryFn: async () => {
       const response = await fetch('/api/v1/health/ready');
-      if (!response.ok) throw new Error('Database unavailable');
+      if (!response.ok) throw new Error('Unavailable');
       return response.json();
     },
     refetchInterval: 30000,
   });
   return (
-    <>
+    <div className="landing">
       <header className="landing-nav">
-        <Link className="brand" to="/">
-          <span className="brand-icon">
-            <Layers3 size={21} />
-          </span>
-          {PRODUCT_NAME}
-          <span className="brand-dot">.</span>
-        </Link>
+        <Brand />
         <nav>
-          <a href="#principles">How it works</a>
-          <a href="#build">The build</a>
-          <a className="button small" href="/login">
-            Open demo <ArrowUpRight size={15} />
-          </a>
+          <a href="#how-it-works">How it works</a>
+          <Link to="/login" className="text-link">
+            Sign in <ArrowUpRight size={16} />
+          </Link>
         </nav>
       </header>
       <main>
-        <section className="hero">
-          <div className="eyebrow">
-            <span className="pulse" /> ENGINEERED FOR EVERY MOVEMENT
-          </div>
-          <h1>
-            Move money.
-            <br />
-            <span>Keep the whole story.</span>
-          </h1>
-          <p>
-            A quieter kind of financial infrastructure. Simulated payments, a verifiable ledger, and
-            risk decisions you can actually explain.
-          </p>
-          <div className="hero-actions">
-            <a href="/login" className="button">
-              Launch demo <ArrowRight size={17} />
-            </a>
-            <a href="#principles" className="text-link">
-              Look under the hood <ArrowUpRight size={16} />
-            </a>
-          </div>
-          <div className="demo-notice">
-            <ShieldCheck size={15} />
-            {DEMO_NOTICE}
-          </div>
-          <div className="hero-ledger">
-            <div className="ledger-heading">
-              <span>
-                <span className="pulse" /> THE DOUBLE-ENTRY PRINCIPLE
-              </span>
-              <span className="badge">Illustrative journal</span>
+        <section className="landing-hero">
+          <div className="landing-intro">
+            <span className="eyebrow">
+              <span className="pulse" /> A WORKSPACE FOR VIRTUAL PAYMENTS
+            </span>
+            <h1>
+              Payments,
+              <br />
+              without the
+              <br />
+              <span>guesswork.</span>
+            </h1>
+            <p>
+              A simple way to send, review, and track virtual INR. Clear balances. Complete
+              transaction records.
+            </p>
+            <div className="hero-actions">
+              <Link className="button" to="/login">
+                Open your workspace <ArrowUpRight size={18} />
+              </Link>
+              <Link className="text-link" to="/register">
+                Create an account
+              </Link>
             </div>
-            <div className="ledger-flow">
-              <div className="ledger-person">
-                <div className="avatar">R</div>
+            <small className="landing-disclaimer">Demo / simulated funds — no real money.</small>
+          </div>
+          <div className="statement-scene">
+            <div className="statement">
+              <div className="statement-top">
+                <span className="statement-symbol">₹</span>
+                <span>
+                  PAYMENT RECORD
+                  <br />
+                  <small>Illustrative example</small>
+                </span>
+              </div>
+              <div className="statement-amount">
+                ₹500<span>.00</span>
+              </div>
+              <span className="statement-status">
+                <Check size={14} /> Balanced transfer
+              </span>
+              <dl>
                 <div>
-                  <small>FROM RAHUL</small>
-                  <strong>Debit ₹500.00</strong>
-                  <span>Wallet liability decreases</span>
+                  <dt>From</dt>
+                  <dd>Rahul Sharma</dd>
+                </div>
+                <div>
+                  <dt>To</dt>
+                  <dd>Priya Mehta</dd>
+                </div>
+                <div>
+                  <dt>Currency</dt>
+                  <dd>INR · simulated</dd>
+                </div>
+              </dl>
+              <div className="statement-posting">
+                <div>
+                  <span>Debit</span>
+                  <strong>₹500.00</strong>
+                </div>
+                <div>
+                  <span>Credit</span>
+                  <strong>₹500.00</strong>
                 </div>
               </div>
-              <div className="flow-line">
-                <span>INR</span>
-                <ArrowRight size={20} />
-              </div>
-              <div className="ledger-person">
-                <div className="avatar teal">P</div>
-                <div>
-                  <small>TO PRIYA</small>
-                  <strong>Credit ₹500.00</strong>
-                  <span>Wallet liability increases</span>
-                </div>
+              <div className="statement-footer">
+                Two entries. One recorded payment.
+                <ArrowUpRight size={16} />
               </div>
             </div>
-            <div className="ledger-foot">
-              <span>
-                <Check size={15} /> Two entries. One atomic movement.
-              </span>
-              <span>Debits − credits = ₹0.00</span>
-            </div>
+            <span className="scene-caption">A complete record, down to the last paisa.</span>
           </div>
         </section>
-        <section className="principles" id="principles">
-          <div className="section-heading">
-            <span className="eyebrow">TRUST IS IN THE DETAILS</span>
-            <h2>Every rupee has a reason.</h2>
+        <section className="product-principles" id="how-it-works">
+          <div className="principles-title">
+            <span className="eyebrow">LESS FRICTION. MORE CLARITY.</span>
+            <h2>
+              Everything you need.
+              <br />
+              Nothing in the way.
+            </h2>
           </div>
-          <div className="feature-grid">
+          <div className="principle-list">
             {[
               {
-                icon: Layers3,
-                title: 'A ledger that adds up',
-                text: 'Every movement has an equal debit and credit. Posted journals are immutable, with database-enforced balance checks.',
+                title: 'Send with a clear next step',
+                text: 'Find a recipient, enter an amount, and review before sending. Follow the payment’s status from the same workspace.',
               },
               {
-                icon: GitBranch,
-                title: 'One intent. One transfer.',
-                text: 'Durable idempotency and transactional locks protect payments from duplicate requests and concurrent spending.',
+                title: 'Know where every amount comes from',
+                text: 'Balances come from posted entries. Open a transaction to see its debit, credit, and complete payment record.',
               },
               {
-                icon: ShieldCheck,
-                title: 'Risk, with a reason',
-                text: 'Transparent rules and human review make unusual transfers understandable. No black-box approvals.',
+                title: 'Review exceptions, with context',
+                text: 'Unusual requests go to an administrator with the reasons attached. Funds move only after the necessary checks.',
               },
-            ].map((f) => (
-              <article key={f.title}>
-                <f.icon size={23} />
-                <h3>{f.title}</h3>
-                <p>{f.text}</p>
+            ].map((item, i) => (
+              <article key={item.title}>
+                <span className="principle-number">0{i + 1}</span>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </div>
               </article>
             ))}
           </div>
         </section>
-        <section className="build-panel" id="build">
+        <section className="landing-bottom">
           <div>
-            <span className="eyebrow">BUILDING IN THE OPEN</span>
-            <h2>Ready to follow the money?</h2>
-            <p>
-              Open a synthetic wallet, send a payment, and inspect the ledger.
-              <br />
-              Explore every step, from a request to its accounting proof.
-            </p>
+            <h2>Ready when you are.</h2>
+            <p>Try the local demo with a sample account, or create your own.</p>
+            <Link className="text-link" to="/login">
+              Explore SettleCraft <ArrowRight size={16} />
+            </Link>
           </div>
-          <div className="health-card">
-            <Activity size={22} />
+          <div className="service-status">
+            <span className={`pulse ${health.isError ? 'offline' : ''}`} />
             <div>
               <strong>
                 {health.isPending
-                  ? 'Checking services…'
+                  ? 'Checking connection'
                   : health.isError
                     ? 'Database unavailable'
-                    : 'Database connected'}
+                    : 'Local services connected'}
               </strong>
-              <span>Live status from the local API</span>
+              <small>Live API status</small>
             </div>
             <button
               className="icon-button"
-              aria-label="Refresh service status"
               onClick={() => void health.refetch()}
+              aria-label="Refresh service status"
             >
-              <ArrowUpRight size={20} />
+              <RefreshCw size={16} />
             </button>
           </div>
         </section>
       </main>
       <footer>
-        <span className="brand">SettleCraft.</span>
-        <span>Built to be understood. Designed to be verified.</span>
-        <span>Local-first · Simulated INR</span>
+        <Brand />
+        <span>Virtual payments. Real accounting.</span>
+        <span>Local demo · INR</span>
       </footer>
-    </>
+    </div>
   );
 }

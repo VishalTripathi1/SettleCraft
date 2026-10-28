@@ -76,13 +76,13 @@ export function TransactionsTable({
   if (!items.length)
     return (
       <Empty
-        title="Your next chapter starts here"
+        title="No transactions yet"
         text="Completed payments and requests awaiting review will appear here."
       />
     );
   return (
     <div className="table-scroll" tabIndex={0} role="region" aria-label="Transaction table">
-      <table>
+      <table className="transactions-table">
         <thead>
           <tr>
             <th>{admin ? 'Transfer' : 'Transaction'}</th>
@@ -113,7 +113,12 @@ export function TransactionsTable({
                             ? t.recipient_name
                             : t.sender_name}
                       </strong>
-                      <small>{t.note || (outgoing ? 'Wallet transfer' : 'Payment received')}</small>
+                      <small className="transaction-note">
+                        {t.note || (outgoing ? 'Wallet transfer' : 'Payment received')}
+                      </small>
+                      <span className="mobile-transaction-meta">
+                        <Status value={t.status} />
+                      </span>
                     </div>
                   </div>
                 </td>

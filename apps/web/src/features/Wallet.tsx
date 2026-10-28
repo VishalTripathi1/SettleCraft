@@ -1,14 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import {
-  ArrowUpRight,
-  Plus,
-  ArrowRight,
-  Wallet,
-  ShieldCheck,
-  ArrowLeftRight,
-  Layers3,
-} from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Plus, ArrowRight, ChevronDown } from 'lucide-react';
 import { api, money, date, type List } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { PageHeading, ErrorBox, Loading, TransactionsTable, Empty } from '../components/ui';
@@ -29,92 +21,83 @@ export function Dashboard() {
         '/wallets/me/ledger-activity',
       ),
   });
+  const incoming = ledger.data
+    ?.filter((e) => e.direction === 'CREDIT')
+    .reduce((sum, e) => sum + BigInt(e.amount), 0n);
+  const outgoing = ledger.data
+    ?.filter((e) => e.direction === 'DEBIT')
+    .reduce((sum, e) => sum + BigInt(e.amount), 0n);
   return (
     <>
       <PageHeading
-        eyebrow="YOUR MONEY, AT A GLANCE"
-        title={`Hello, ${user?.name.split(' ')[0]}.`}
-        text="A clear view of what’s yours and where it’s going."
-        action={
-          <Link className="button" to="/app/send">
-            <ArrowUpRight size={16} /> Send money
-          </Link>
-        }
+        title="Overview"
+        text={`Welcome back, ${user?.name.split(' ')[0]}. Here’s your wallet at a glance.`}
       />
       <ErrorBox error={wallet.error || transfers.error || ledger.error} />
       <div className="dashboard-top">
-        <section className="wallet-card">
+        <section className="wallet-card" aria-label="Wallet balance">
           <div className="wallet-top">
-            <span>
-              <Wallet size={17} /> YOUR VIRTUAL WALLET
-            </span>
-            <Layers3 size={24} />
+            <span>Available balance</span>
+            <span className="currency-badge">INR</span>
           </div>
-          <div className="wallet-label">Available balance</div>
-          <div className="balance">
+          <div className="balance motion-enter" key={wallet.data?.balance}>
             {wallet.isPending ? '…' : wallet.data ? money(wallet.data.balance) : 'Unavailable'}
-            <span>INR</span>
           </div>
-          <div className="wallet-bottom">
-            <span>
-              <i />
-              {wallet.data?.status ?? 'Connecting'}
-            </span>
-            <Link to="/app/fund-demo">
-              <Plus size={14} /> Add demo funds
+          <p className="wallet-caption">Demo funds available to send</p>
+          <div className="wallet-actions">
+            <Link className="button" to="/app/send">
+              Send money <ArrowUpRight size={17} />
+            </Link>
+            <Link className="secondary" to="/app/fund-demo">
+              <Plus size={17} /> Add funds
             </Link>
           </div>
-          <div className="wallet-orbit" />
-        </section>
-        <section className="account-summary">
-          <div className="summary-icon">
-            <ShieldCheck size={21} />
+          <div className="wallet-bottom">
+            <span>{user?.name}</span>
+            <span>
+              <i />
+              {wallet.data?.status === 'ACTIVE'
+                ? 'Wallet active'
+                : (wallet.data?.status ?? 'Connecting')}
+            </span>
           </div>
-          <h3>One balance. A complete record.</h3>
+        </section>
+        <section className="account-summary" aria-label="Recent posted activity">
+          <div className="summary-heading">
+            <h2>Money in & out</h2>
+            <span>Last 20 ledger entries</span>
+          </div>
+          <div className="activity-metric">
+            <span className="transaction-icon incoming">
+              <ArrowDownLeft size={18} />
+            </span>
+            <div>
+              <span>Money in</span>
+              <strong>{incoming === undefined ? '—' : money(incoming)}</strong>
+            </div>
+          </div>
+          <div className="activity-metric">
+            <span className="transaction-icon">
+              <ArrowUpRight size={18} />
+            </span>
+            <div>
+              <span>Money out</span>
+              <strong>{outgoing === undefined ? '—' : money(outgoing)}</strong>
+            </div>
+          </div>
           <p>
-            Your available balance comes directly from immutable ledger entries. Pending transfers
-            don’t reserve funds.
+            Includes posted transfers, funding, and reversals. Pending payments are not included.
           </p>
-          <div className="summary-footer">
-            <span>
-              Wallet currency <strong>Indian Rupee</strong>
-            </span>
-            <span>
-              Environment <strong>Synthetic demo</strong>
-            </span>
-          </div>
         </section>
-      </div>
-      <div className="quick-grid">
-        <Link to="/app/send">
-          <span className="quick-icon">
-            <ArrowUpRight size={19} />
-          </span>
-          <div>
-            <strong>Send a payment</strong>
-            <small>Move virtual INR with confidence</small>
-          </div>
-          <ArrowRight size={17} />
-        </Link>
-        <Link to="/app/transactions">
-          <span className="quick-icon teal">
-            <ArrowLeftRight size={19} />
-          </span>
-          <div>
-            <strong>Follow the trail</strong>
-            <small>Every request, from start to finish</small>
-          </div>
-          <ArrowRight size={17} />
-        </Link>
       </div>
       <section className="panel">
         <div className="panel-heading">
           <div>
             <h2>Recent transactions</h2>
-            <p>The latest activity across your wallet.</p>
+            <p>Your latest payments and requests.</p>
           </div>
           <Link className="text-link" to="/app/transactions">
-            View all <ArrowRight size={14} />
+            View all <ArrowRight size={15} />
           </Link>
         </div>
         {transfers.isPending ? (
@@ -123,36 +106,35 @@ export function Dashboard() {
           <TransactionsTable items={transfers.data?.items.slice(0, 5) ?? []} userId={user?.id} />
         )}
       </section>
-      <section className="panel ledger-panel">
-        <div className="panel-heading">
+      <details className="panel ledger-panel">
+        <summary className="panel-heading">
           <div>
-            <h2>Ledger activity</h2>
-            <p>Your latest 20 posted entries, including demo issuance.</p>
+            <h2>Accounting entries</h2>
+            <p>See the posted entries behind your balance.</p>
           </div>
-          <span className="subtle-badge">
-            <Layers3 size={12} /> Ledger-derived
-          </span>
-        </div>
+          <ChevronDown size={18} />
+        </summary>
         {ledger.isPending ? (
           <Loading />
         ) : !ledger.data?.length ? (
-          <Empty
-            title="An empty ledger, ready to begin"
-            text="Request demo funds to create your first balanced journal."
-          />
+          <Empty title="No entries yet" text="Approved demo funding creates your first entries." />
         ) : (
           <div className="ledger-list">
             {ledger.data.map((e) => (
               <div key={e.id}>
                 <span className={`transaction-icon ${e.direction === 'CREDIT' ? 'incoming' : ''}`}>
-                  <ArrowLeftRight size={16} />
+                  {e.direction === 'CREDIT' ? (
+                    <ArrowDownLeft size={16} />
+                  ) : (
+                    <ArrowUpRight size={16} />
+                  )}
                 </span>
                 <div>
                   <strong>
                     {e.kind === 'DEMO_ISSUANCE'
-                      ? 'Demo funds issued'
+                      ? 'Demo funding'
                       : e.kind === 'REVERSAL'
-                        ? 'Transfer reversed'
+                        ? 'Transfer reversal'
                         : 'Wallet transfer'}
                   </strong>
                   <small>{date(e.created_at)}</small>
@@ -165,7 +147,7 @@ export function Dashboard() {
             ))}
           </div>
         )}
-      </section>
+      </details>
     </>
   );
 }

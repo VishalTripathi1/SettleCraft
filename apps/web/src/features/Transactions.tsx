@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { Search, ArrowLeft, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
+import { Search, ArrowLeft, CheckCircle2, Clock, ArrowRight, CircleX } from 'lucide-react';
 import { api, money, date, type List, type Transfer } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { PageHeading, ErrorBox, Loading, TransactionsTable, Status } from '../components/ui';
@@ -21,8 +21,8 @@ export function Transactions({ admin = false }: { admin?: boolean }) {
     <>
       <PageHeading
         eyebrow={admin ? 'OPERATIONS' : 'YOUR PAYMENT HISTORY'}
-        title="Every movement, in view."
-        text="Search the story behind your simulated payments."
+        title="Transactions"
+        text="Find a payment by name, reference, or note."
       />
       <section className="panel">
         <div className="filters">
@@ -129,16 +129,37 @@ export function TransactionDetail() {
       </Link>
       <PageHeading
         eyebrow={t.reference}
-        title="The complete picture."
+        title="Transaction details"
         text="A traceable record of this payment and its outcome."
         action={<Status value={t.status} />}
       />
       <div className="detail-grid">
         <section className="panel detail-main">
-          <div className="transfer-summary">
+          <div
+            className={`transfer-summary outcome-${t.status.toLowerCase()}`}
+            key={t.status}
+            role="status"
+          >
             <span className="large-status">
-              {t.status === 'COMPLETED' ? <CheckCircle2 size={30} /> : <Clock size={30} />}
+              {t.status === 'COMPLETED' ? (
+                <CheckCircle2 size={30} />
+              ) : t.status === 'PENDING_REVIEW' ? (
+                <Clock size={30} />
+              ) : (
+                <CircleX size={30} />
+              )}
             </span>
+            <div className="outcome-label">
+              {t.reversals.length
+                ? 'Payment reversed'
+                : t.status === 'COMPLETED'
+                  ? t.recipient_id === user?.id
+                    ? 'Payment received'
+                    : 'Payment complete'
+                  : t.status === 'PENDING_REVIEW'
+                    ? 'Awaiting review'
+                    : 'Payment not completed'}
+            </div>
             <h2>{money(t.amount)}</h2>
             <p>
               {t.sender_name} <ArrowRight size={14} /> {t.recipient_name}

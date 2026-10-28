@@ -42,7 +42,7 @@ export function Overview() {
     <>
       <PageHeading
         eyebrow="OPERATIONS / SYNTHETIC DATA"
-        title="The bigger picture."
+        title="Operations overview"
         text="Payments, review holds, and the health of the system."
         action={
           <Link className="button" to="/admin/reviews">
@@ -96,7 +96,7 @@ export function Overview() {
         </section>
         <section className="panel operations-card">
           <Layers3 size={25} />
-          <h3>Behind every payment</h3>
+          <h3>Event delivery</h3>
           <p>
             Check accounting invariants and inspect delivery attempts from the transactional event
             outbox.
@@ -180,7 +180,7 @@ export function Reviews() {
     <>
       <PageHeading
         eyebrow="HUMAN JUDGMENT MATTERS"
-        title="A moment of consideration."
+        title="Review queue"
         text="Review the evidence, leave a reason, and make a clear decision."
       />
       <div className="tabs">
@@ -341,7 +341,7 @@ export function Audit() {
     <>
       <PageHeading
         eyebrow="AN APPEND-ONLY RECORD"
-        title="Accountability, in writing."
+        title="Audit trail"
         text="Who did what, when, and why. Administrative actions remain traceable."
       />
       <section className="panel">
@@ -445,7 +445,7 @@ export function Integrity() {
     <>
       <PageHeading
         eyebrow="VERIFY, DON’T ASSUME"
-        title="Does everything add up?"
+        title="System integrity"
         text="Run a consistent-snapshot check of posted journals and wallet balances."
         action={
           <button
@@ -465,7 +465,7 @@ export function Integrity() {
           <h2>
             {last
               ? last.result.passed
-                ? 'Every entry accounted for.'
+                ? 'Ledger checks passed'
                 : 'An integrity check needs attention.'
               : 'Ready for a closer look.'}
           </h2>
@@ -563,7 +563,7 @@ export function RiskRules() {
     <>
       <PageHeading
         eyebrow="TRANSPARENCY BY DEFAULT"
-        title="No black box here."
+        title="Risk rules"
         text="Deterministic signals, clear thresholds, and a human in the loop."
       />
       <ErrorBox error={q.error} />

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Check, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Check, ArrowLeft, LoaderCircle } from 'lucide-react';
 import { amountSchema, parseAmount } from '@settlecraft/shared';
 import { api, money, type Transfer } from '../lib/api';
 import { PageHeading, ErrorBox } from '../components/ui';
@@ -54,7 +54,7 @@ export function Send() {
     <>
       <PageHeading
         eyebrow="MOVE VIRTUAL MONEY"
-        title="A little goes a long way."
+        title="Send money"
         text="Send simulated INR to another SettleCraft wallet."
       />
       <div className="form-layout">
@@ -69,8 +69,8 @@ export function Send() {
             </span>
           </div>
           {step === 1 ? (
-            <form onSubmit={review}>
-              <h2>Who are you paying?</h2>
+            <form onSubmit={review} className="motion-enter" aria-busy={busy}>
+              <h2>Payment details</h2>
               <p className="muted">Look up a recipient by their exact email address.</p>
               <label>
                 Recipient email
@@ -107,12 +107,16 @@ export function Send() {
               <ErrorBox error={error} />
               <button className="button full" disabled={busy}>
                 {busy ? 'Finding recipient…' : 'Review payment'}
-                <ArrowRight size={16} />
+                {busy ? (
+                  <LoaderCircle className="motion-spin" size={16} />
+                ) : (
+                  <ArrowRight size={16} />
+                )}
               </button>
             </form>
           ) : (
-            <div>
-              <h2>Everything look right?</h2>
+            <div className="motion-enter" key="review" aria-busy={mutation.isPending}>
+              <h2>Review payment</h2>
               <p className="muted">Check the recipient and amount before confirming.</p>
               <div className="review-amount">{money(parseAmount(amount))}</div>
               <dl className="detail-list">
@@ -151,8 +155,18 @@ export function Send() {
                   : attempted
                     ? 'Retry this payment'
                     : 'Confirm & send'}
-                <ArrowRight size={16} />
+                {mutation.isPending ? (
+                  <LoaderCircle className="motion-spin" size={16} />
+                ) : (
+                  <ArrowRight size={16} />
+                )}
               </button>
+              {mutation.isPending && (
+                <div className="payment-progress" role="status">
+                  <span />
+                  <p>Sending your payment. Waiting for confirmation…</p>
+                </div>
+              )}
               {!attempted && (
                 <button className="back-button" onClick={() => setStep(1)}>
                   <ArrowLeft size={14} /> Edit payment details
@@ -163,12 +177,12 @@ export function Send() {
         </section>
         <aside className="form-aside">
           <ShieldCheck size={27} />
-          <h3>Thoughtful by design.</h3>
+          <h3>Before you send</h3>
           <p>Each transfer is recorded as an equal debit and credit. Both sides move together.</p>
           <hr />
           <h4>Your request, protected</h4>
           <p>Duplicate clicks and safe retries share one durable request key.</p>
-          <h4>A moment for review</h4>
+          <h4>When a payment needs review</h4>
           <p>
             Unusual transfers may wait for an administrator. No funds move while a request is held.
           </p>

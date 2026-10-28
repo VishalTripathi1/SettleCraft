@@ -27,7 +27,7 @@ export function Funding() {
     <>
       <PageHeading
         eyebrow="MAKE ROOM TO EXPLORE"
-        title="A little demo capital."
+        title="Add demo funds"
         text="Request virtual funds. Every approved top-up has a balanced journal."
       />
       <div className="form-layout">
@@ -120,7 +120,7 @@ export function Funding() {
         </section>
         <aside className="form-aside">
           <ShieldCheck size={27} />
-          <h3>Play money. Proper accounting.</h3>
+          <h3>About demo funding</h3>
           <p>
             No bank, card, or payment information is required. These funds have no real-world value.
           </p>
@@ -216,7 +216,7 @@ export function Settings() {
     <>
       <PageHeading
         eyebrow="YOUR WORKSPACE"
-        title="Make yourself at home."
+        title="Account settings"
         text="Manage your profile and account security."
       />
       <ErrorBox error={error} />

@@ -26,3 +26,19 @@ The user approved automatic continuation through tested phases on 27 October 202
 ## Explicit boundaries
 
 No real-money integration, paid services, external accounts or deployment. Ledger balances are derived rather than cached; reconciliation checks journal/negative-wallet invariants. SQL is explicit typed/parameterized `pg` rather than Drizzle. Reversals are full-amount and admin-only. Queues/history have documented bounded pages. Optional ML is not represented as completed. Long-running load/failover testing, production DB-role separation, complete screen-reader certification and additional security hardening remain future work in `ROADMAP.md` and `SECURITY.md`.
+
+## Interface refresh — 28 October 2026
+
+Replaced the visual system with self-hosted Geist typography, charcoal text, restrained green accents, simpler navigation, and clearer page labels. Redesigned landing and authentication pages, brought wallet actions into the balance card, collapsed detailed accounting entries, and made mobile transaction rows fit without horizontal scrolling. Shared styling covers payment, settings, and operations screens.
+
+Validation: lint, strict TypeScript, 17 unit/component/API tests, production build, formatting and diff checks pass. Nine browser cases passed on the initial run; three public-page accessibility cases identified low-contrast landing labels. After darkening those labels, all three affected cases passed on WebKit, desktop Chrome and mobile Chrome. No serious or critical Axe findings remain in the tested screens. Desktop and mobile screenshots were visually inspected for landing, login, wallet, payment form, and the desktop integrity view. Backend integration tests were not repeated for this frontend-only change; the earlier baseline results above remain historical.
+
+## Authentication and motion update — 28 October 2026
+
+Replaced the split authentication screen with a centered card, full-page linework, and a short entrance animation. Added sign-in and recipient-lookup spinners, payment-submission progress, animated completed-payment confirmation, balance updates, route transitions, button feedback, and incoming-credit notifications. Pending/rejected outcomes retain distinct states; success is shown only after the API confirms completion. No artificial delay was added to payment or authentication requests.
+
+Incoming notifications poll the latest 20 ledger entries every five seconds while the app is active, establish a baseline on sign-in, and refresh wallet/history data when new credits appear. This is an in-app convenience, not a durable notification feed: bursts beyond that bounded ledger window and credits received while signed out are visible in the account history rather than guaranteed as notifications. Reduced-motion settings disable decorative motion while retaining visible progress text.
+
+Validation includes browser coverage for historical-credit suppression, a new-credit notification, dismissal without replay, and reduced-motion behavior. A controlled slow login response verified the spinner while waiting and successful navigation afterward. The new login was visually inspected at 1440px and 360px with no horizontal overflow.
+
+Final verification: lint, strict TypeScript, formatting, build, and 17 unit/component/API tests pass. All nine functional browser cases pass across desktop Chrome, mobile Chrome, and WebKit. Initial accessibility scans caught transient contrast loss during fades; text now moves without fading, and all six accessibility cases pass on rerun. No serious or critical Axe findings remain on the tested screens.
