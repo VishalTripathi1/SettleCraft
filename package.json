@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "test": "vitest run --exclude '**/*.integration.test.ts'",
     "test:integration": "vitest run apps/api/tests/*.integration.test.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/browser-tests.mjs",
     "db:migrate": "tsx apps/api/src/db/migrate.ts",
     "db:seed": "tsx apps/api/src/db/seed.ts",
     "db:reset-demo": "tsx scripts/reset-demo.ts",

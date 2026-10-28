@@ -42,3 +42,7 @@ Incoming notifications poll the latest 20 ledger entries every five seconds whil
 Validation includes browser coverage for historical-credit suppression, a new-credit notification, dismissal without replay, and reduced-motion behavior. A controlled slow login response verified the spinner while waiting and successful navigation afterward. The new login was visually inspected at 1440px and 360px with no horizontal overflow.
 
 Final verification: lint, strict TypeScript, formatting, build, and 17 unit/component/API tests pass. All nine functional browser cases pass across desktop Chrome, mobile Chrome, and WebKit. Initial accessibility scans caught transient contrast loss during fades; text now moves without fading, and all six accessibility cases pass on rerun. No serious or critical Axe findings remain on the tested screens.
+
+## Expanded UI stress audit — 28 October 2026
+
+42 browser cases and 34 non-browser tests pass. Added slow/error-response, lost-response retry, real receiver-notification, keyboard-navigation, cross-session balance-refresh, and extreme-size layout coverage. Fixed mobile focus handling, stale outgoing balances, long-name/large-amount overflow and missing landmarks. Accessibility scans now check all reported Axe severities. The browser runner isolates each browser in a fresh server process to preserve production login throttling. See [UI_STRESS_AUDIT.md](UI_STRESS_AUDIT.md) for findings, evidence and limits.

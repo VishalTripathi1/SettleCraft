@@ -50,3 +50,7 @@ Playwright saves screenshots and traces under ignored `test-results/` on failure
 - Worker crash injection is a service-level test option, never an HTTP control or client parameter.
 - Fixtures are not a formal durability/failover or production security audit. JWT expiry is library-enforced; expiry-time travel, sustained brute-force, process-kill PostgreSQL recovery, and distributed multi-host testing remain additional hardening work.
 - GitHub Actions configuration is supplied. Local checks were executed; no remote CI run is claimed.
+
+## Expanded UI stress audit — 28 October 2026
+
+42 browser cases and 34 non-browser tests pass. Added slow/error-response, lost-response retry, real receiver-notification, keyboard-navigation, cross-session balance-refresh, and extreme-size layout coverage. Fixed mobile focus handling, stale outgoing balances, long-name/large-amount overflow and missing landmarks. Accessibility scans now check all reported Axe severities. The browser runner isolates each browser in a fresh server process to preserve production login throttling. See [UI_STRESS_AUDIT.md](UI_STRESS_AUDIT.md) for findings, evidence and limits.

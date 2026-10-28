@@ -33,6 +33,16 @@ test('register, approve funding, send, inspect ledger, settings, and logout', as
   await admin.getByLabel('Reason for this decision').fill('Approved synthetic E2E funding');
   await admin.getByRole('button', { name: 'Confirm approve' }).click();
   await expect(admin.getByRole('dialog')).toBeHidden();
+  const recipientContext = await browser.newContext();
+  const recipientPage = await recipientContext.newPage();
+  await recipientPage.goto('http://127.0.0.1:5174/login');
+  await recipientPage.getByRole('button', { name: 'Priya', exact: true }).click();
+  const baseline = recipientPage.waitForResponse(
+    (response) => response.url().endsWith('/wallets/me/ledger-activity') && response.ok(),
+  );
+  await recipientPage.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await baseline;
+  await expect(recipientPage.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await page.goto('/app/send');
   await page.getByLabel('Recipient email').fill('priya@settlecraft.local');
   await page.getByLabel('Amount in INR').fill('500');
@@ -44,6 +54,10 @@ test('register, approve funding, send, inspect ledger, settings, and logout', as
   await expect(page.getByText('completed', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('DEBIT', { exact: true })).toBeVisible();
   await expect(page.getByText('CREDIT', { exact: true })).toBeVisible();
+  await expect(recipientPage.locator('.payment-notification')).toContainText('+₹500.00', {
+    timeout: 12000,
+  });
+  await recipientContext.close();
   await page.goto('/app/dashboard');
   await expect(page.locator('.balance')).toContainText('₹500.00');
   mkdirSync('docs/screenshots', { recursive: true });
@@ -87,19 +101,17 @@ test('landing and protected routes work at the target viewport', async ({ page }
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 
-test('public pages have no serious or critical accessibility violations', async ({ page }) => {
+test('public pages have no automated accessibility violations', async ({ page }) => {
   for (const path of ['/', '/login']) {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     expect(
-      results.violations
-        .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-        .map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })),
+      results.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })),
     ).toEqual([]);
   }
 });
 
-test('workspace accessibility has no serious or critical violations', async ({ page }) => {
+test('workspace accessibility has no automated violations', async ({ page }) => {
   test.setTimeout(90000);
   await page.goto('/login');
   await page.getByRole('button', { name: 'Admin', exact: true }).click();
@@ -119,9 +131,7 @@ test('workspace accessibility has no serious or critical violations', async ({ p
     await page.goto(path);
     await page.locator('.page-heading').waitFor();
     const result = await new AxeBuilder({ page }).analyze();
-    for (const violation of result.violations.filter(
-      (v) => v.impact === 'serious' || v.impact === 'critical',
-    ))
+    for (const violation of result.violations)
       failures.push({ path, id: violation.id, nodes: violation.nodes.map((n) => n.target) });
   }
   expect(failures).toEqual([]);

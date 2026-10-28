@@ -19,16 +19,17 @@ export function IncomingPayment({ userId }: { userId: string }) {
   useEffect(() => {
     if (!activity.data) return;
     const entries = activity.data;
-    const fresh = seen.current
-      ? entries.filter((e) => !seen.current!.has(e.id) && e.direction === 'CREDIT')
-      : [];
-    seen.current = new Set(entries.map((e) => e.id));
+    const fresh = seen.current ? entries.filter((e) => !seen.current!.has(e.id)) : [];
+    if (!seen.current) seen.current = new Set();
+    for (const entry of entries) seen.current.add(entry.id);
     if (!fresh.length) return;
-    setNotice({
-      id: fresh[0]!.id,
-      amount: fresh.reduce((sum, e) => sum + BigInt(e.amount), 0n),
-      count: fresh.length,
-    });
+    const credits = fresh.filter((entry) => entry.direction === 'CREDIT');
+    if (credits.length)
+      setNotice({
+        id: credits[0]!.id,
+        amount: credits.reduce((sum, e) => sum + BigInt(e.amount), 0n),
+        count: credits.length,
+      });
     for (const queryKey of [['wallet'], ['ledger'], ['transfers']])
       void client.invalidateQueries({ queryKey });
   }, [activity.data, client]);

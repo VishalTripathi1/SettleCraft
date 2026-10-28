@@ -1977,10 +1977,12 @@ footer .brand-icon svg {
 @media (max-width: 850px) {
   .sidebar {
     width: 238px;
+    visibility: hidden;
     transform: translateX(-100%);
     transition: transform 0.2s;
   }
   .sidebar.open {
+    visibility: visible;
     transform: translateX(0);
   }
   .app-content {
@@ -2897,4 +2899,28 @@ footer .brand-icon svg {
   .secondary {
     transition: none;
   }
+}
+
+/* Preserve every digit even at the narrowest supported widths. */
+.balance,
+.review-amount,
+.transfer-summary h2,
+.activity-metric strong {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.balance.balance-long {
+  font-size: clamp(22px, 3vw, 36px);
+}
+
+.page-heading > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wallet-bottom > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wallet-bottom > span:last-child {
+  flex-shrink: 0;
 }

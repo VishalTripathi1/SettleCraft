@@ -40,7 +40,10 @@ export function Dashboard() {
             <span>Available balance</span>
             <span className="currency-badge">INR</span>
           </div>
-          <div className="balance motion-enter" key={wallet.data?.balance}>
+          <div
+            className={`balance motion-enter ${wallet.data && money(wallet.data.balance).length > 13 ? 'balance-long' : ''}`}
+            key={wallet.data?.balance}
+          >
             {wallet.isPending ? '…' : wallet.data ? money(wallet.data.balance) : 'Unavailable'}
           </div>
           <p className="wallet-caption">Demo funds available to send</p>

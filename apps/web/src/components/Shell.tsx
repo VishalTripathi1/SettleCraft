@@ -1,6 +1,6 @@
 import { IncomingPayment } from './IncomingPayment';
 import { Brand } from './Brand';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, Outlet, Navigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -24,6 +24,47 @@ export function Shell() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
+  const sidebar = useRef<HTMLElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 850px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 850px)');
+    const update = () => {
+      setMobile(media.matches);
+      setOpen(false);
+    };
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  useEffect(() => {
+    if (!open || !mobile) return;
+    const panel = sidebar.current;
+    if (!panel) return;
+    panel.querySelector<HTMLButtonElement>('.mobile-close')?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+      }
+      if (event.key !== 'Tab') return;
+      const targets = Array.from(
+        panel.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)'),
+      );
+      if (!targets.length) return;
+      event.preventDefault();
+      const current = targets.indexOf(document.activeElement as HTMLElement);
+      const next = (current + (event.shiftKey ? -1 : 1) + targets.length) % targets.length;
+      targets[next]?.focus();
+    };
+    document.addEventListener('keydown', keyboard);
+    return () => {
+      document.removeEventListener('keydown', keyboard);
+      document.body.style.overflow = previousOverflow;
+      menuButton.current?.focus();
+    };
+  }, [open, mobile]);
   const isAdmin = location.pathname.startsWith('/admin');
   if (auth.loading) return <Loading />;
   if (!auth.user) return <Navigate to="/login" replace />;
@@ -48,7 +89,16 @@ export function Shell() {
   return (
     <div className="app-layout">
       <IncomingPayment key={auth.user.id} userId={auth.user.id} />
-      <aside className={`sidebar ${open ? 'open' : ''}`}>
+      <aside
+        ref={sidebar}
+        id="workspace-navigation"
+        className={`sidebar ${open ? 'open' : ''}`}
+        inert={mobile && !open}
+        aria-hidden={mobile && !open ? true : undefined}
+        role={mobile && open ? 'dialog' : undefined}
+        aria-label="Workspace navigation"
+        aria-modal={mobile && open ? true : undefined}
+      >
         <Brand />
         <button
           className="mobile-close icon-button"
@@ -87,9 +137,12 @@ export function Shell() {
           onClick={() => setOpen(false)}
         />
       )}
-      <div className="app-content">
+      <div className="app-content" inert={mobile && open}>
         <header className="app-header">
           <button
+            ref={menuButton}
+            aria-expanded={open}
+            aria-controls="workspace-navigation"
             className="menu-button icon-button"
             aria-label="Open navigation"
             onClick={() => setOpen(true)}
@@ -122,7 +175,7 @@ export function Shell() {
             </Link>
           </div>
         </header>
-        <div className="app-main">
+        <main className="app-main">
           <div className="simulation-banner">
             <ShieldCheck size={14} /> Simulated INR wallet. No real money.
             <span>Local environment</span>
@@ -131,11 +184,11 @@ export function Shell() {
           <div key={location.pathname} className="route-transition">
             <Outlet />
           </div>
-        </div>
-        <div className="app-footer">
+        </main>
+        <footer className="app-footer">
           <span>SettleCraft</span>
           <span>Demo / simulated funds — no real money</span>
-        </div>
+        </footer>
       </div>
     </div>
   );

@@ -144,3 +144,52 @@ test('public forms fit small phones, landscape, and wide screens', async ({ page
     }
   }
 });
+
+test('lost payment response retries the same intent without showing early success', async ({
+  page,
+}) => {
+  await login(page);
+  const attempts: { key: string | undefined; body: string | null }[] = [];
+  await page.route('**/api/v1/transfers', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    attempts.push({
+      key: route.request().headers()['idempotency-key'],
+      body: route.request().postData(),
+    });
+    await route.abort('failed');
+  });
+  await page.goto('/app/send');
+  await page.getByLabel('Recipient email').fill('priya@settlecraft.local');
+  await page.getByLabel('Amount in INR').fill('1');
+  await page.getByRole('button', { name: 'Review payment', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm & send' }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByText('Payment complete', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry this payment' }).click();
+  await expect.poll(() => attempts.length).toBe(2);
+  expect(attempts[0]?.key).toBeTruthy();
+  expect(attempts[1]).toEqual(attempts[0]);
+  await expect(page.getByRole('button', { name: 'Retry this payment' })).toBeEnabled();
+});
+
+test('large balances remain entirely inside their card on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.route('**/api/v1/wallets/me', (route) =>
+    route.fulfill({ json: { balance: '99999999999', status: 'ACTIVE' } }),
+  );
+  await page.route('**/api/v1/auth/login', async (route) => {
+    const response = await route.fetch();
+    const data = await response.json();
+    data.user.name = 'N'.repeat(80);
+    await route.fulfill({ response, json: data });
+  });
+  await login(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await expect(page.locator('.balance')).toContainText('₹99,99,99,999.99');
+  for (const selector of ['.balance', '.wallet-card', '.wallet-bottom', '.page-heading']) {
+    expect(await page.locator(selector).evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+      true,
+    );
+  }
+  await expect(page.getByRole('main')).toHaveCount(1);
+});
