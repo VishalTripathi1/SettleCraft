@@ -185,6 +185,97 @@ paths['/webhooks/demo-provider']!.post!.parameters = [
   { in: 'header', name: 'X-Webhook-Timestamp', required: true, schema: string },
   { in: 'header', name: 'X-Webhook-Signature', required: true, schema: string },
 ];
+endpoint(
+  '/transfers/{id}/reversal-requests',
+  'post',
+  'Sender: request a full reversal; no funds move',
+  {
+    body: object(
+      {
+        reason: {
+          type: 'string',
+          enum: ['WRONG_RECIPIENT', 'INCORRECT_AMOUNT', 'DUPLICATE_PAYMENT', 'MISTAKE', 'OTHER'],
+        },
+        notes: { type: 'string', minLength: 5, maxLength: 1000 },
+      },
+      ['reason', 'notes'],
+    ),
+    idempotent: true,
+    created: true,
+  },
+);
+for (const path of [
+  '/reversal-requests',
+  '/admin/reversal-requests',
+  '/transfers/{id}/reversal-requests',
+])
+  endpoint(
+    path,
+    'get',
+    'Reversal requests, scoped to owner or ADMIN; status/from/to/transferId filters',
+    { list: true },
+  );
+for (const path of ['/reversal-requests/{id}', '/admin/reversal-requests/{id}'])
+  endpoint(path, 'get', 'Request detail; owner only or ADMIN with eligibility, risk and audit');
+endpoint(
+  '/admin/reversal-requests/{id}/decision',
+  'post',
+  'ADMIN: atomically approve a reversal or reject; same decision retries return terminal result',
+  { body: decision },
+);
+for (const path of ['/history', '/admin/history'])
+  endpoint(
+    path,
+    'get',
+    'Combined payment and reversal history; type/direction/status/from/to filters, page size 20',
+    { list: true },
+  );
+endpoint(
+  '/reversals/{id}',
+  'get',
+  'Participant or ADMIN: compensating transaction details and ledger proof',
+);
+endpoint(
+  '/transfers/{id}/verification/send',
+  'post',
+  'Sender: request email code (60s cooldown; five sends/payment; 20/hour/sender)',
+);
+endpoint(
+  '/transfers/{id}/verification/confirm',
+  'post',
+  'Sender: verify code and complete or escalate payment; same-code retry is safe',
+  { body: object({ code: { type: 'string', pattern: '^[0-9]{6}$' } }) },
+);
+for (const path of [
+  '/history',
+  '/admin/history',
+  '/reversal-requests',
+  '/admin/reversal-requests',
+  '/transfers/{id}/reversal-requests',
+]) {
+  const params = paths[path]!.get!.parameters!;
+  for (const name of ['status', 'from', 'to'])
+    params.push({ in: 'query', name, schema: { type: 'string' } });
+  if (path.endsWith('/history'))
+    for (const name of ['type', 'direction'])
+      params.push({ in: 'query', name, schema: { type: 'string' } });
+  else params.push({ in: 'query', name: 'transferId', schema: { type: 'string', format: 'uuid' } });
+}
+endpoint(
+  '/admin/request-counts',
+  'get',
+  'ADMIN: pending/queued reversal, transfer-review and funding-request counts',
+);
+endpoint(
+  '/auth/session',
+  'get',
+  'Current remaining idle lifetime and configured timeout in milliseconds',
+);
+endpoint(
+  '/auth/activity',
+  'post',
+  'Explicit foreground interaction heartbeat; renew idle deadline only for an active session',
+);
 export const openapi: OpenAPIV3.Document = {
   openapi: '3.0.3',
   info: {

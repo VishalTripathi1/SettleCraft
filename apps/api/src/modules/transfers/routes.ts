@@ -1,3 +1,6 @@
+import { reversalRouter } from '../reversals/routes.js';
+import { eligibility } from '../reversals/service.js';
+import { verificationRouter } from '../verification/routes.js';
 import { Router } from 'express';
 import { z } from 'zod';
 import { amountSchema, parseAmount } from '@settlecraft/shared';
@@ -10,10 +13,14 @@ import { rules } from '../risk/service.js';
 import { ApiError } from '../../middleware/errors.js';
 export const domainRouter = Router();
 domainRouter.use(authenticate);
+domainRouter.use(reversalRouter);
+domainRouter.use(verificationRouter);
 const id = (v: unknown) => z.uuid().parse(v);
 const pagination = z.object({
   page: z.coerce.number().int().min(1).max(10000).default(1),
-  status: z.enum(['COMPLETED', 'PENDING_REVIEW', 'REJECTED', 'FAILED']).optional(),
+  status: z
+    .enum(['COMPLETED', 'PENDING_REVIEW', 'PENDING_VERIFICATION', 'REJECTED', 'FAILED'])
+    .optional(),
   search: z.string().max(100).default(''),
 });
 const decision = z
@@ -108,6 +115,8 @@ domainRouter.get('/transfers/:id', async (req, res) => {
     decisions: decisions.rows,
     reversals: reversals.rows,
     risk,
+    reversal_eligible: await eligibility(t.id),
+    reversal_request_eligible: await eligibility(t.id, pool, false),
   });
 });
 domainRouter.get('/wallets/me/ledger-activity', async (req, res) => {
@@ -141,6 +150,16 @@ domainRouter.post('/wallets/me/demo-topups', async (req, res) => {
     );
 });
 domainRouter.use('/admin', admin);
+domainRouter.get('/admin/request-counts', async (_req, res) => {
+  const counts = (
+    await pool.query(`SELECT
+ (SELECT count(*)::int FROM reversal_requests WHERE status='PENDING') AS reversal_pending,
+ (SELECT count(*)::int FROM reversal_requests WHERE status='QUEUED') AS reversal_queued,
+ (SELECT count(*)::int FROM transfers WHERE status='PENDING_REVIEW') AS transfer_reviews,
+ (SELECT count(*)::int FROM topups WHERE status='PENDING_REVIEW') AS funding_requests`)
+  ).rows[0];
+  res.json(counts);
+});
 domainRouter.get('/admin/transfers', (req, res) => listTransfers(req, res, true));
 domainRouter.get('/admin/reviews', async (_req, res) =>
   res.json(
@@ -200,7 +219,7 @@ domainRouter.post('/admin/transfers/:id/reverse', async (req, res) => {
   );
 });
 domainRouter.get('/admin/risk-rules', (_req, res) =>
-  res.json({ version: '1.0', reviewThreshold: 60, rules }),
+  res.json({ version: '2.0', reviewThreshold: 60, rules }),
 );
 domainRouter.get('/admin/audit', async (req, res) => {
   const p = pagination.parse(req.query);
@@ -237,7 +256,10 @@ domainRouter.get('/admin/overview', async (_req, res) => {
       'SELECT count(*) FILTER(WHERE delivered_at IS NULL)::int AS pending,count(*) FILTER(WHERE delivered_at IS NOT NULL)::int AS delivered,COALESCE(sum(attempts),0)::int AS attempts FROM outbox_events',
     )
   ).rows[0];
-  res.json({ ...totals, daily, jobs });
+  const pendingReversals = (
+    await pool.query("SELECT count(*)::int AS n FROM reversal_requests WHERE status='PENDING'")
+  ).rows[0].n;
+  res.json({ ...totals, daily, jobs, pendingReversals });
 });
 
 domainRouter.get('/admin/events', async (_req, res) =>

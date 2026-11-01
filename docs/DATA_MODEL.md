@@ -46,3 +46,11 @@ PROCESSING → COMPLETED or FAILED.
 Terminal transfers cannot be rewritten. SQL checks require COMPLETED iff journal_id exists. The service traverses PROCESSING inside the same transaction; consumers see only committed final/held state. Approved-but-unfunded requests become FAILED. Reversal leaves the original COMPLETED transfer intact and adds a separate unique reversal.
 
 A transfer's sender, recipient, amount, currency, note and reference are immutable. One effective review and one full reversal are guaranteed by unique constraints. Idempotency scope is (actor, operation, key), with canonical payload fingerprint and stable serialized result. Records are retained indefinitely in this demo.
+
+## Migrations 004–005
+
+`reversal_requests` links sender, original transfer, reviewer and (only on successful approval) one financial reversal. A partial unique index prevents duplicate pending requests, and a trigger enforces terminal-state immutability, original sender ownership and matching reversal linkage. `transfer_verifications` stores challenge IDs/HMACs, expiry, attempt/send counts, delivery state and consumption time; it never stores plaintext codes. See [migration and policy notes](REVERSALS_AND_OTP.md#migrations).
+
+Migration 006 extends reversal requests with `QUEUED` and `queued_at`, makes the active uniqueness constraint cover pending and queued requests, adds `wallet_spendable_balances` as a reservation projection, and records `refresh_sessions.last_activity_at` for server-side inactivity expiry.
+
+Migration 007 adds a partial `(created_at,id)` index for pending verification expiry. Payment expiry is fixed at creation + 15 minutes; OTP challenge resends do not alter it. Expiry uses the existing `FAILED` terminal state and an audit event, without a ledger journal.

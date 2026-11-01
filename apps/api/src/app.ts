@@ -79,7 +79,7 @@ export function createApp() {
   app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(openapi));
   app.use('/api/v1/auth', authRouter);
   app.get('/api/v1/wallets/me', authenticate, async (_req, res) => {
-    const r = await pool.query('SELECT * FROM wallet_balances WHERE owner_id=$1', [
+    const r = await pool.query('SELECT * FROM wallet_spendable_balances WHERE owner_id=$1', [
       res.locals.user.id,
     ]);
     res.json(r.rows[0]);

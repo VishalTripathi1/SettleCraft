@@ -8,7 +8,7 @@ Use a freshly initialized demo DB or an explicitly confirmed local reset if you 
 
 **1:00–1:30 — The failure cases.** Show the automated test for twenty concurrent identical keys and the competing-spend test. Optionally issue the same API intent again through Swagger with the same key. Attempt an unfunded transfer: FAILED, no journal. Explain why a disabled submit button is insufficient.
 
-**1:30–2:05 — Explainable review.** Sign in as admin, open Review queue. The seed includes Aarav's ₹10,000 equipment request with explicit deterministic risk signals. Approve or reject with a rationale. Explain no reservation and the approval-time fresh balance check. View the immutable audit event.
+**1:30–2:05 — User-requested correction.** Open Rahul's completed payment and request a reversal. Sign in as admin, open Reversal requests, inspect the request and approve or reject with a rationale. Explain that submission reserves no funds and approval rechecks the recipient's current balance. Show the separate reversal entry in both participants' histories and its audit event. Amount-only ₹10,000 payments now use email verification instead of this manual queue.
 
 **2:05–2:40 — Proof.** Run reconciliation; show equal totals, zero unbalanced journals and zero negative wallets. Show event receipts and the recorded benchmark. State the hardware and short local test limitations.
 
@@ -38,3 +38,9 @@ Use a freshly initialized demo DB or an explicitly confirmed local reset if you 
 **How accurate is the fraud model?** There is no trained model. Versioned deterministic demo rules produce inspectable reasons; real fraud accuracy was not evaluated.
 
 **What would change for production?** Independent security/accounting reviews, limited database roles, stronger operational controls, durable distributed rate limits, backups, monitoring, retention, user lifecycle and regulatory requirements. This project is not approved for real funds.
+
+## New correction and verification demo
+
+Follow [the reversal walkthrough](REVERSALS_AND_OTP.md#demo-walkthrough) for sender request → admin decision → both histories. The ₹10,000 amount-only example now awaits email verification, not human review. Use a real inbox account plus [Brevo setup](REVERSALS_AND_OTP.md#local-setup) for that demo; seeded `.local` addresses cannot receive codes. Other sufficiently high-risk signals still require admin review.
+
+For the queued-refund demonstration, have the recipient spend the payment before the sender requests a reversal. The required explanation still permits submission. Admin approval queues it, sidebar counts update, and the recipient sees incoming funds reserved until enough accumulates for one full refund. Keep `npm run dev` running so its worker can settle the queue. The app logs out after 15 minutes without foreground activity, with a warning during the final minute.

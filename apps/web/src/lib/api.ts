@@ -51,9 +51,14 @@ export async function api<T>(
       ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     });
   let r = await request();
-  if (r.status === 401 && options.retryAuth !== false && !path.startsWith('/auth/')) {
+  if (
+    r.status === 401 &&
+    options.retryAuth !== false &&
+    (!path.startsWith('/auth/') || ['/auth/activity', '/auth/session'].includes(path))
+  ) {
     const session = await refreshSession();
     if (session) r = await request();
+    else window.dispatchEvent(new Event('settlecraft-session-expired'));
   }
   if (!r.ok) {
     const error = await r
@@ -81,6 +86,11 @@ export function date(value: string) {
   }).format(new Date(value));
 }
 export type Transfer = {
+  history_id?: string;
+  type?: 'TRANSFER' | 'REVERSAL';
+  transfer_id?: string;
+  original_reference?: string;
+  direction?: string;
   id: string;
   sender_id: string;
   recipient_id: string;

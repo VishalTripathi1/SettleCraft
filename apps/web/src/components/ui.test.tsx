@@ -49,3 +49,36 @@ it('shows an honest empty state without invented transfers', () => {
 it('formats paise exactly above Number.MAX_SAFE_INTEGER', () => {
   expect(money('900719925474099129')).toBe('₹9,00,71,99,25,47,40,991.29');
 });
+it('renders a separate reversal with the correct direction and detail link for both participants', () => {
+  const reversal: Transfer = {
+    ...transfer,
+    id: 'reversal',
+    history_id: 'REVERSAL:reversal',
+    type: 'REVERSAL',
+    transfer_id: transfer.id,
+    original_reference: transfer.reference,
+    reference: 'reverse-a',
+    sender_id: 'recipient',
+    recipient_id: 'sender',
+    sender_name: 'Priya',
+    recipient_name: 'Rahul',
+  };
+  const view = render(
+    <MemoryRouter>
+      <TransactionsTable items={[reversal, transfer]} userId="sender" />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/Reversal received/)).toBeTruthy();
+  expect(screen.getByText('+₹500.00')).toBeTruthy();
+  expect(screen.getByText('−₹500.00')).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'View reverse-a' }).getAttribute('href')).toBe(
+    '/app/reversals/reversal',
+  );
+  view.rerender(
+    <MemoryRouter>
+      <TransactionsTable items={[reversal, transfer]} userId="recipient" />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/Reversal sent/)).toBeTruthy();
+  expect(screen.getAllByRole('row')).toHaveLength(3);
+});

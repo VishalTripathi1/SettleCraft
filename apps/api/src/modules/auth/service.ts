@@ -12,12 +12,17 @@ export const digest = (v: string) => createHash('sha256').update(v).digest('hex'
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 export const hashPassword = (password: string) =>
   argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
-export async function session(c: PoolClient, user: User, family: string = randomUUID()) {
+export async function session(
+  c: PoolClient,
+  user: User,
+  family: string = randomUUID(),
+  lastActivity?: Date,
+) {
   const refresh = randomBytes(48).toString('base64url');
   const id = randomUUID();
   await c.query(
-    "INSERT INTO refresh_sessions(id,user_id,token_hash,family_id,expires_at) VALUES($1,$2,$3,$4,now()+interval '7 days')",
-    [id, user.id, digest(refresh), family],
+    "INSERT INTO refresh_sessions(id,user_id,token_hash,family_id,expires_at,last_activity_at) VALUES($1,$2,$3,$4,now()+interval '7 days',COALESCE($5::timestamptz,now()))",
+    [id, user.id, digest(refresh), family, lastActivity ?? null],
   );
   const accessToken = await new SignJWT({ sid: id })
     .setProtectedHeader({ alg: 'HS256' })
@@ -73,9 +78,10 @@ export async function refresh(token: string) {
       family_id: string;
       revoked_at: string | null;
       expired: boolean;
+      last_activity_at: Date;
     }>(
-      'SELECT *,expires_at<now() AS expired FROM refresh_sessions WHERE token_hash=$1 FOR UPDATE',
-      [digest(token)],
+      "SELECT *,expires_at<now() OR last_activity_at<=now()-($2::int*interval '1 minute') AS expired FROM refresh_sessions WHERE token_hash=$1 FOR UPDATE",
+      [digest(token), env.SESSION_IDLE_MINUTES],
     );
     const old = r.rows[0];
     if (!old) return null;
@@ -92,7 +98,7 @@ export async function refresh(token: string) {
     );
     if (!u.rows[0]) return null;
     await c.query('UPDATE refresh_sessions SET revoked_at=now() WHERE id=$1', [old.id]);
-    return session(c, u.rows[0], old.family_id);
+    return session(c, u.rows[0], old.family_id, old.last_activity_at);
   });
   if (!result) throw new ApiError(401, 'SESSION_EXPIRED', 'Please sign in again.');
   return result;
@@ -107,11 +113,12 @@ export const authenticate: RequestHandler = async (req, res, next) => {
       algorithms: ['HS256'],
     });
     const u = await pool.query<User>(
-      "SELECT u.id,u.name,u.email,u.role FROM users u JOIN refresh_sessions s ON s.user_id=u.id WHERE u.id=$1 AND s.id=$2 AND s.revoked_at IS NULL AND s.expires_at>now() AND u.status='ACTIVE'",
-      [payload.sub, payload.sid],
+      "SELECT u.id,u.name,u.email,u.role FROM users u JOIN refresh_sessions s ON s.user_id=u.id WHERE u.id=$1 AND s.id=$2 AND s.revoked_at IS NULL AND s.expires_at>now() AND s.last_activity_at>now()-($3::int*interval '1 minute') AND u.status='ACTIVE'",
+      [payload.sub, payload.sid, env.SESSION_IDLE_MINUTES],
     );
     if (!u.rows[0]) throw new Error();
     res.locals.user = u.rows[0];
+    res.locals.sessionId = payload.sid;
     next();
   } catch {
     next(new ApiError(401, 'UNAUTHENTICATED', 'Please sign in to continue.'));

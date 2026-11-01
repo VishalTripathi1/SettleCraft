@@ -36,9 +36,9 @@ The browser runner starts its own API on 4001 and Vite on 5174, migrates/seeds t
 | Browser flows             | Register → request funds → admin approves → send → inspect debit/credit → dashboard → profile → reconcile → logout; protected routes and viewport width                                                                                                   |
 | Browser accessibility     | Axe scans on landing/login and eight authenticated screens, failing serious/critical violations; native modal focus handling and scrollable-table keyboard access                                                                                         |
 
-`npm run check` runs **17 unit/component/API tests and 17 database integration tests** as distinct suites, plus ESLint, strict TypeScript, and frontend/API builds. The core acceptance scenarios in the brief are represented; several related assertions intentionally share one integration test.
+`npm run check` runs **20 unit/component/API tests and 40 database integration tests** as distinct suites, plus ESLint, strict TypeScript, and frontend/API builds. The core acceptance scenarios in the brief are represented; several related assertions intentionally share one integration test.
 
-Browser tests cover four cases across Chrome desktop, Chrome mobile and WebKit (12 case/configuration combinations). Actual final outcomes are recorded in [PROGRESS](PROGRESS.md). Axe scanning is useful evidence, not a complete WCAG conformance claim or manual screen-reader audit.
+The full browser suite has 18 cases across desktop Chrome, mobile Chrome and WebKit (54 case/configuration combinations). A subsequent feature rerun covered 4 reversal, OTP, queued refund and inactivity cases in all three browser configurations (12 additional case/configuration runs). Axe scanning is useful evidence, not a complete WCAG conformance claim or manual screen-reader audit.
 
 ## Failure evidence
 
@@ -51,6 +51,20 @@ Playwright saves screenshots and traces under ignored `test-results/` on failure
 - Fixtures are not a formal durability/failover or production security audit. JWT expiry is library-enforced; expiry-time travel, sustained brute-force, process-kill PostgreSQL recovery, and distributed multi-host testing remain additional hardening work.
 - GitHub Actions configuration is supplied. Local checks were executed; no remote CI run is claimed.
 
-## Expanded UI stress audit — 28 October 2026
+## Interface stress coverage
 
-42 browser cases and 34 non-browser tests pass. Added slow/error-response, lost-response retry, real receiver-notification, keyboard-navigation, cross-session balance-refresh, and extreme-size layout coverage. Fixed mobile focus handling, stale outgoing balances, long-name/large-amount overflow and missing landmarks. Accessibility scans now check all reported Axe severities. The browser runner isolates each browser in a fresh server process to preserve production login throttling. See [UI_STRESS_AUDIT.md](UI_STRESS_AUDIT.md) for findings, evidence and limits.
+Browser cases exercise delayed and failed responses, idempotent retries after lost responses, incoming notifications, keyboard navigation, cross-session balance refresh, reduced motion, and narrow/mobile layouts. Regression fixes cover mobile drawer focus, stale outgoing balances, long names, large amounts, missing page landmarks, and authentication throttling during browser runs. The runner starts a fresh API process per browser and feature file; production rate limits remain unchanged. Axe checks cover reported severities on the scanned screens. This is automated evidence, not a full manual accessibility audit.
+
+## Reversal and OTP coverage (2026-10-31)
+
+New database tests cover sender-only eligibility for every transfer state, duplicate submissions, concurrent approvals, approval/rejection races, direct admin reversal races and pending-request resolution, frozen/disabled accounts, insufficient funds, replayed decisions, request privacy, combined history direction/sorting/pagination/search, audit and reconciliation. OTP tests exercise old accounts, real server-side code consumption, wrong-attempt persistence, expiry, resend cooldown, supersession, sender/payment binding, changed balance/risk, missing configuration and provider failures. Mail adapter unit tests mock the HTTP provider and verify the Brevo request contract and error redaction.
+
+The new browser acceptance case performs the complete ₹1,000 request/approval workflow, checks both participants and unchanged pending balances, retries approval, then tests independent direct reversal and rejection. The OTP browser case mocks email/API responses to exercise delivery, wrong-code and success UI; it does not establish actual inbox delivery. Request modal, admin details and OTP screens receive Axe checks. See [implementation and setup notes](REVERSALS_AND_OTP.md).
+
+### Queued refunds and inactivity
+
+Additional tests verify required nonblank explanations, requesting after the recipient spent the original funds, durable queue authorization, reserved partial funding, outgoing-spend protection, oldest-first settlement, frozen-wallet waiting, and concurrent worker safety. Session integration tests prove that polling and refresh rotation preserve the old activity time, expired access/refresh cannot be revived, and explicit activity renews an active session.
+
+The browser suite now starts the real outbox/refund worker. One acceptance case adds partial funds, verifies reservation in the recipient UI, adds the remainder and waits for automatic posting. Another advances the browser clock to check the inactivity warning, renewal and logout, then checks that protected navigation requires login. Each browser/file receives a fresh API process to avoid pooling all simulated users into the same production rate-limit window; production throttles are unchanged.
+
+Verification-expiry regression tests cover abandoned payments without a code, concurrent sweepers, synchronous expiry when resending without a worker, a fresh valid OTP racing expiry, unchanged fresh/completed payments, one audit event, and no funds movement. Latest full verification on November 1: 20 unit/component/API tests and 40 database integration tests, lint, type checking, and production builds passed. The 12-case cross-browser feature rerun also passed.

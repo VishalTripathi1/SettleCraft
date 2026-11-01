@@ -1,3 +1,6 @@
+import { SessionTimeout } from './SessionTimeout';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../lib/api';
 import { IncomingPayment } from './IncomingPayment';
 import { Brand } from './Brand';
 import { useEffect, useRef, useState } from 'react';
@@ -66,6 +69,18 @@ export function Shell() {
     };
   }, [open, mobile]);
   const isAdmin = location.pathname.startsWith('/admin');
+  const counts = useQuery({
+    queryKey: ['request-counts'],
+    queryFn: () =>
+      api<{
+        reversal_pending: number;
+        reversal_queued: number;
+        transfer_reviews: number;
+        funding_requests: number;
+      }>('/admin/request-counts'),
+    enabled: auth.user?.role === 'ADMIN',
+    refetchInterval: 5000,
+  });
   if (auth.loading) return <Loading />;
   if (!auth.user) return <Navigate to="/login" replace />;
   if (isAdmin && auth.user.role !== 'ADMIN') return <Navigate to="/app/dashboard" replace />;
@@ -73,6 +88,7 @@ export function Shell() {
     ? ([
         ['/admin/overview', 'Overview', LayoutDashboard],
         ['/admin/transactions', 'Transactions', ArrowLeftRight],
+        ['/admin/reversal-requests', 'Reversal requests', ArrowLeftRight],
         ['/admin/reviews', 'Review queue', ShieldCheck],
         ['/admin/audit', 'Audit trail', ClipboardList],
         ['/admin/integrity', 'System integrity', Activity],
@@ -82,12 +98,14 @@ export function Shell() {
         ['/app/dashboard', 'Overview', LayoutDashboard],
         ['/app/send', 'Send money', ArrowUpRight],
         ['/app/transactions', 'Transactions', ArrowLeftRight],
+        ['/app/reversal-requests', 'Reversal requests', ClipboardList],
         ['/app/fund-demo', 'Add demo funds', PlusCircle],
         ['/app/settings', 'Settings', Settings],
       ] as const);
   const title = links.find((l) => location.pathname.startsWith(l[0]))?.[1] ?? 'Transaction details';
   return (
     <div className="app-layout">
+      <SessionTimeout key={`session-${auth.user.id}`} userId={auth.user.id} />
       <IncomingPayment key={auth.user.id} userId={auth.user.id} />
       <aside
         ref={sidebar}
@@ -113,6 +131,19 @@ export function Shell() {
             <NavLink to={to} onClick={() => setOpen(false)} key={to}>
               <Icon size={18} />
               {label}
+              {to === '/admin/reversal-requests' && (
+                <span
+                  className="nav-count"
+                  aria-label={`${counts.data?.reversal_pending ?? 0} requests awaiting review, ${counts.data?.reversal_queued ?? 0} queued for funds`}
+                >
+                  {(counts.data?.reversal_pending ?? 0) + (counts.data?.reversal_queued ?? 0)}
+                </span>
+              )}
+              {to === '/admin/reviews' && (
+                <span className="nav-count" aria-label="Pending payment and funding reviews">
+                  {(counts.data?.transfer_reviews ?? 0) + (counts.data?.funding_requests ?? 0)}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

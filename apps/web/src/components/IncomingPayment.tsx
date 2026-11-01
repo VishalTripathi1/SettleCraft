@@ -30,7 +30,15 @@ export function IncomingPayment({ userId }: { userId: string }) {
         amount: credits.reduce((sum, e) => sum + BigInt(e.amount), 0n),
         count: credits.length,
       });
-    for (const queryKey of [['wallet'], ['ledger'], ['transfers']])
+    for (const queryKey of [
+      ['wallet'],
+      ['ledger'],
+      ['transfers'],
+      ['transfer'],
+      ['reversal-requests'],
+      ['reversal-request'],
+      ['admin-transfers'],
+    ])
       void client.invalidateQueries({ queryKey });
   }, [activity.data, client]);
   useEffect(() => {

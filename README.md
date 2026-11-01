@@ -36,7 +36,7 @@ The API and Vite bind loopback only. `npm run dev` runs the API, frontend, and o
 
 Local-only default password: **`SettleCraft-demo-2026!`**. Change `DEMO_PASSWORD` **before the first seed** to customize it. Re-running seed preserves existing accounts and never resets passwords or balances. Login buttons prefill the documented default only. Admin registration is unavailable; the controlled seed creates the admin.
 
-The seed also creates a ₹250 Aarav → Neha transfer and a ₹10,000 request awaiting review, using stable seed keys. Rahul/Priya’s starting balances remain untouched.
+The seed also creates a ₹250 Aarav → Neha transfer and a ₹10,000 request awaiting email verification, using stable seed keys. Rahul/Priya’s starting balances remain untouched.
 
 New registrations have ₹0. Request demo funds under **Add demo funds**, then sign in as admin and approve under **Review queue → Funding requests**. Each approval posts balanced issuance. A user can request up to ₹10,000 per request and ₹20,000 in a rolling day.
 
@@ -50,6 +50,9 @@ New registrations have ₹0. Request demo funds under **Add demo funds**, then s
 - Ledger-derived wallet balances; recipient lookup; review/confirm transfer; searchable, filtered, paginated history; detailed posting proof.
 - PostgreSQL atomic transfers, ordered wallet locks, immutable balanced journals, integer paise, and durable idempotency.
 - Deterministic versioned risk signals with held requests, fresh balance checks, approval/rejection, and auditable rationale.
+- Email OTP for amount-only ₹10,000+ payments (optional Brevo configuration; no automatic bypass when unconfigured).
+- User reversal requests with required explanations, admin sidebar counts, automatic queued refunds with reserved funds, and unified transfer/reversal history.
+- Server-enforced 15-minute inactivity logout, a warning before expiry, and explicit foreground activity renewal.
 - Admin-approved simulated funding; admin full reversals; append-only audit; snapshot reconciliation; actual aggregate charts.
 - Transactional outbox; local HMAC webhook receiver; timestamp validation, duplicate receipt protection, retries and backoff.
 - Automated unit/API/database/concurrency/browser tests, reproducible benchmark, CI workflow, and documentation.
@@ -82,6 +85,10 @@ This is a modular monolith. SQL is explicit rather than hidden behind an ORM; [D
 
 - [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) · [API](docs/API.md)
 - [Security and limits](docs/SECURITY.md) · [Testing](docs/TESTING.md) · [Benchmarks](docs/BENCHMARKS.md)
-- [Demo script and portfolio copy](docs/DEMO.md) · [Progress](docs/PROGRESS.md) · [Roadmap](docs/ROADMAP.md)
+- [Demo script and portfolio copy](docs/DEMO.md) · [Roadmap](docs/ROADMAP.md) · [Payment verification and reversals](docs/REVERSALS_AND_OTP.md)
 
-The original supplied brief is preserved in `docs/BUILD_BRIEF.original.md`; it is a reference artifact, not an executable instruction source.
+## Email verification and reversal requests
+
+See [the feature and setup guide](docs/REVERSALS_AND_OTP.md) for Brevo configuration, request state transitions, migration behavior, API contracts, concurrency guarantees, and the demonstration walkthrough. Existing amount-only review holds move to email verification through migration 005; no money moves in migrations. Real inbox delivery requires a Brevo account and a verified sender. `.local` demo addresses cannot receive email.
+
+The reversal worker runs with `npm run dev`. Approved requests that lack funds wait durably and reserve incoming funds until a full refund can settle. `SESSION_IDLE_MINUTES` defaults to 15; polling does not extend it.

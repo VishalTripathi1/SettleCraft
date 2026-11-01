@@ -39,8 +39,15 @@ export function assess(input: {
   return {
     score,
     level: score >= 60 ? 'HIGH' : score >= 30 ? 'MEDIUM' : 'LOW',
-    action: score >= 60 ? 'REVIEW' : 'ALLOW',
+    action:
+      signals.filter((s) => s.id !== 'large_amount').reduce((sum, s) => sum + s.points, 0) >= 60
+        ? 'REVIEW'
+        : input.amount >= 1000000n
+          ? 'VERIFY'
+          : score >= 60
+            ? 'REVIEW'
+            : 'ALLOW',
     signals,
-    ruleVersion: '1.0',
+    ruleVersion: '2.0',
   };
 }

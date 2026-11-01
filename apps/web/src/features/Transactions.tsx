@@ -1,3 +1,4 @@
+import { PaymentReversalRequests, PaymentVerification } from './Reversals';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
@@ -10,11 +11,15 @@ export function Transactions({ admin = false }: { admin?: boolean }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [type, setType] = useState(''),
+    [direction, setDirection] = useState(''),
+    [from, setFrom] = useState(''),
+    [to, setTo] = useState('');
   const result = useQuery({
-    queryKey: ['transfers', admin, search, status, page],
+    queryKey: ['transfers', admin, search, status, page, type, direction, from, to],
     queryFn: () =>
       api<List>(
-        `${admin ? '/admin' : ''}/transfers?${new URLSearchParams({ search, page: String(page), ...(status ? { status } : {}) })}`,
+        `${admin ? '/admin' : ''}/history?${new URLSearchParams({ search, page: String(page), ...(status ? { status } : {}), ...(type ? { type } : {}), ...(direction ? { direction } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) })}`,
       ),
   });
   return (
@@ -25,7 +30,7 @@ export function Transactions({ admin = false }: { admin?: boolean }) {
         text="Find a payment by name, reference, or note."
       />
       <section className="panel">
-        <div className="filters">
+        <div className="filters history-filters">
           <label className="search-input">
             <Search size={17} />
             <input
@@ -47,12 +52,62 @@ export function Transactions({ admin = false }: { admin?: boolean }) {
             }}
           >
             <option value="">All statuses</option>
-            {['COMPLETED', 'PENDING_REVIEW', 'FAILED', 'REJECTED'].map((s) => (
-              <option key={s} value={s}>
-                {s.replaceAll('_', ' ')}
-              </option>
-            ))}
+            {['COMPLETED', 'PENDING_VERIFICATION', 'PENDING_REVIEW', 'FAILED', 'REJECTED'].map(
+              (s) => (
+                <option key={s} value={s}>
+                  {s.replaceAll('_', ' ')}
+                </option>
+              ),
+            )}
           </select>
+          <select
+            aria-label="Transaction type"
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All types</option>
+            <option value="TRANSFER">Payments</option>
+            <option value="REVERSAL">Reversals</option>
+          </select>
+          {!admin && (
+            <select
+              aria-label="Transaction direction"
+              value={direction}
+              onChange={(e) => {
+                setDirection(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All directions</option>
+              <option value="INCOMING">Incoming</option>
+              <option value="OUTGOING">Outgoing</option>
+            </select>
+          )}
+          <label>
+            From (UTC)
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+          <label>
+            To (UTC)
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
         </div>
         <ErrorBox error={result.error} />
         {result.isPending ? (
@@ -86,6 +141,8 @@ export function Transactions({ admin = false }: { admin?: boolean }) {
   );
 }
 type Detail = Transfer & {
+  reversal_eligible: boolean;
+  reversal_request_eligible: boolean;
   entries: { direction: string; amount: string; account_id: string }[];
   decisions: { decision: string; rationale: string; created_at: string }[];
   reversals: { id: string; journal_id: string; rationale: string; created_at: string }[];
@@ -106,7 +163,7 @@ export function TransactionDetail() {
   const result = useQuery({
     queryKey: ['transfer', id],
     queryFn: () => api<Detail>(`/transfers/${id}`),
-    refetchInterval: (q) => (q.state.data?.status === 'PENDING_REVIEW' ? 5000 : false),
+    refetchInterval: 5000,
   });
   const reverse = useMutation({
     mutationFn: () =>
@@ -143,7 +200,7 @@ export function TransactionDetail() {
             <span className="large-status">
               {t.status === 'COMPLETED' ? (
                 <CheckCircle2 size={30} />
-              ) : t.status === 'PENDING_REVIEW' ? (
+              ) : ['PENDING_REVIEW', 'PENDING_VERIFICATION'].includes(t.status) ? (
                 <Clock size={30} />
               ) : (
                 <CircleX size={30} />
@@ -158,7 +215,9 @@ export function TransactionDetail() {
                     : 'Payment complete'
                   : t.status === 'PENDING_REVIEW'
                     ? 'Awaiting review'
-                    : 'Payment not completed'}
+                    : t.status === 'PENDING_VERIFICATION'
+                      ? 'Awaiting verification'
+                      : 'Payment not completed'}
             </div>
             <h2>{money(t.amount)}</h2>
             <p>
@@ -216,6 +275,9 @@ export function TransactionDetail() {
             {t.reversals.map((r) => (
               <li key={r.id}>
                 <strong>Reversed with a compensating journal</strong>
+                <Link className="text-link" to={`${admin ? '/admin' : '/app'}/reversals/${r.id}`}>
+                  View reversal transaction
+                </Link>
                 <span>
                   {r.rationale} · {date(r.created_at)}
                 </span>
@@ -225,6 +287,11 @@ export function TransactionDetail() {
           </ol>
         </section>
         <aside>
+          {t.status === 'PENDING_VERIFICATION' && user?.id === t.sender_id && (
+            <PaymentVerification id={t.id} />
+          )}
+          <PaymentReversalRequests transfer={t} />
+
           <section className="panel detail-side">
             <h3>Ledger proof</h3>
             <p className="muted">

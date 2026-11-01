@@ -184,7 +184,8 @@ export function Send() {
           <p>Duplicate clicks and safe retries share one durable request key.</p>
           <h4>When a payment needs review</h4>
           <p>
-            Unusual transfers may wait for an administrator. No funds move while a request is held.
+            Payments of ₹10,000 or more normally require an email code. Other unusual activity may
+            need administrator review. No funds move while a request is held.
           </p>
           <Link className="text-link" to="/app/transactions">
             View your transactions <ArrowRight size={14} />

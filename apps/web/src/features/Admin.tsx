@@ -19,6 +19,7 @@ import {
   ConfirmDialog,
 } from '../components/ui';
 type Overview = {
+  pendingReversals: number;
   total: number;
   completed: number;
   held: number;
@@ -35,7 +36,7 @@ export function Overview() {
   });
   const recent = useQuery({
     queryKey: ['admin-transfers'],
-    queryFn: () => api<List>('/admin/transfers'),
+    queryFn: () => api<List>('/admin/history'),
   });
   const d = q.data;
   return (
@@ -51,6 +52,9 @@ export function Overview() {
         }
       />
       <ErrorBox error={q.error || recent.error} />
+      <Link className="text-link back-link" to="/admin/reversal-requests">
+        Reversal requests · {d?.pendingReversals ?? 0} pending <ArrowRight size={14} />
+      </Link>
       <div className="stat-grid">
         {[
           ['Completed volume', d ? money(d.volume) : '…', 'All-time simulated INR'],
@@ -573,7 +577,9 @@ export function RiskRules() {
           <h2>Rule policy v{q.data?.version ?? '…'}</h2>
           <p>
             Scores add together and cap at 100. Scores of {q.data?.reviewThreshold ?? 60} or more
-            hold the request for review. This is a rules engine, not a trained fraud model.
+            normally hold the request for review. Payments of ₹10,000 or more use email verification
+            when the remaining risk signals total less than 60. Other suspicious activity still
+            requires review. This is a rules engine, not a trained fraud model.
           </p>
         </div>
       </section>

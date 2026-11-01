@@ -70,6 +70,7 @@ export type Wallet = {
   status: string;
   account_id: string;
   balance: string;
+  reserved: string;
 };
 export async function lockWallets(c: PoolClient, owners: string[]) {
   const locked = await c.query<{ id: string }>(
@@ -79,7 +80,7 @@ export async function lockWallets(c: PoolClient, owners: string[]) {
   if (locked.rowCount !== new Set(owners).size)
     throw new ApiError(404, 'WALLET_NOT_FOUND', 'Wallet not found.');
   const result = await c.query<Wallet>(
-    'SELECT w.id,w.owner_id,w.status,a.id AS account_id,b.balance FROM wallets w JOIN ledger_accounts a ON a.wallet_id=w.id JOIN wallet_balances b ON b.wallet_id=w.id WHERE w.owner_id=ANY($1::uuid[])',
+    'SELECT w.id,w.owner_id,w.status,a.id AS account_id,b.balance,b.reversal_obligation AS reserved FROM wallets w JOIN ledger_accounts a ON a.wallet_id=w.id JOIN wallet_spendable_balances b ON b.wallet_id=w.id WHERE w.owner_id=ANY($1::uuid[])',
     [owners],
   );
   return result.rows;

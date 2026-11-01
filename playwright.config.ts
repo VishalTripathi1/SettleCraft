@@ -41,7 +41,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run db:migrate && npm run db:seed && npm run dev -w @settlecraft/api',
+      command:
+        "npm run db:migrate && npm run db:seed && npx concurrently -k 'npm run dev -w @settlecraft/api' 'npm run worker'",
       url: 'http://127.0.0.1:4001/api/v1/health/ready',
       reuseExistingServer: false,
       env: {

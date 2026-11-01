@@ -63,6 +63,11 @@ export function AuthPage({ register = false }: { register?: boolean }) {
               ? 'Your next move starts here.'
               : 'Everything in order. Ready for your next move.'}
           </p>
+          {sessionStorage.getItem('settlecraft-session-message') && (
+            <p className="session-message" role="status">
+              {sessionStorage.getItem('settlecraft-session-message')}
+            </p>
+          )}
           <div className="auth-form">
             <form onSubmit={submit} aria-busy={busy}>
               {register && (

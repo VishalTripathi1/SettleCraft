@@ -107,6 +107,12 @@ it('rolls back a complete tentative posting on simulated application failure', a
 it('holds high risk without posting, rejects safely, and serializes competing approvals', async () => {
   const a = await user(5000000n),
     b = await user(0n);
+  // Other risk signals (velocity + failures) still require a human even with email OTP.
+  for (let i = 0; i < 5; i++)
+    await pool.query(
+      "INSERT INTO transfers(sender_id,recipient_id,amount,reference,status) VALUES($1,$2,1,$3,'FAILED')",
+      [a, b, randomUUID()],
+    );
   const held = await transfer(a, randomUUID(), payload(b, '10000'), 'test');
   expect(held.status).toBe('PENDING_REVIEW');
   expect(await balance(b)).toBe('0');
@@ -124,6 +130,8 @@ it('rechecks funds on approval; pending requests do not reserve funds', async ()
   const a = await user(1000000n),
     b = await user(0n);
   const held = await transfer(a, randomUUID(), payload(b, '10000'), 'test');
+  // Model a verification that was escalated for manual review.
+  await pool.query("UPDATE transfers SET status='PENDING_REVIEW' WHERE id=$1", [held.id]);
   await transfer(a, randomUUID(), payload(b, '100'), 'test');
   const decided = await review(admin, held.id, 'APPROVE', 'Reviewed but funds changed', 'test');
   expect(decided.status).toBe('FAILED');

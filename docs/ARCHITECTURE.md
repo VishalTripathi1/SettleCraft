@@ -57,3 +57,11 @@ A lost response after commit is recoverable using the same key/body. A failure b
 ## Local deployment
 
 API 4000; Vite 5173 with `/api` proxy; PostgreSQL socket port 55432. Test servers use 4001/5174 and a separate DB. No browser code receives database credentials. No external telemetry. Worker delivery is bounded (2.5 seconds), exponential backoff up to 10 attempts, then visible as exhausted; operational recovery is a controlled local SQL update (documented in API notes), not a hidden automatic money retry.
+
+## Reversal requests and email verification
+
+[Policy and transaction design](REVERSALS_AND_OTP.md) extend the existing ledger engine. Approval calls the extracted `reverseInTransaction` within the request transaction. All reversal paths lock transfer before request and wallets, so direct reversals and approvals cannot deadlock through reversed request/transfer ordering. Expected business failures roll back a financial savepoint and commit only the failed request/audit. Unexpected database errors roll back everything. Unified history is a database read model over transfers and compensating journals, not a second payment table.
+
+Email challenge issuance persists its HMAC before calling Brevo outside the database transaction. Verification consumes the challenge and executes the existing `complete` function atomically; it never posts a separate money-moving implementation. Missing delivery configuration fails closed.
+
+Migration 006 adds the authorized refund queue and a SQL-derived spendable/reserved wallet view. Refund approval reserves current/future recipient funds without posting a journal; the existing worker performs oldest-first full compensating reversals once funds and account status permit. Every outgoing posting checks reservations, and direct reversals honor older queued claims. Worker races are serialized by transfer/wallet locks. Session activity is persisted separately from token rotation; polling cannot keep idle sessions alive.

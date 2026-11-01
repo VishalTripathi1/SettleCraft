@@ -38,7 +38,7 @@ export function Status({ value }: { value: string }) {
   return (
     <span className={`status ${value.toLowerCase()}`}>
       <i />
-      {value.replaceAll('_', ' ').toLowerCase()}
+      {value === 'QUEUED' ? 'queued for funds' : value.replaceAll('_', ' ').toLowerCase()}
     </span>
   );
 }
@@ -99,7 +99,7 @@ export function TransactionsTable({
           {items.map((t) => {
             const outgoing = admin || t.sender_id === userId;
             return (
-              <tr key={t.id}>
+              <tr key={t.history_id ?? t.id}>
                 <td>
                   <div className="table-person">
                     <span className={`transaction-icon ${outgoing ? '' : 'incoming'}`}>
@@ -114,7 +114,22 @@ export function TransactionsTable({
                             : t.sender_name}
                       </strong>
                       <small className="transaction-note">
-                        {t.note || (outgoing ? 'Wallet transfer' : 'Payment received')}
+                        {t.type === 'REVERSAL'
+                          ? admin
+                            ? 'Reversal'
+                            : outgoing
+                              ? 'Reversal sent'
+                              : 'Reversal received'
+                          : outgoing
+                            ? 'Payment sent'
+                            : 'Payment received'}{' '}
+                        <span className="transaction-extra">
+                          {t.type === 'REVERSAL'
+                            ? `· ${t.original_reference}`
+                            : t.note
+                              ? `· ${t.note}`
+                              : ''}
+                        </span>
                       </small>
                       <span className="mobile-transaction-meta">
                         <Status value={t.status} />
@@ -135,7 +150,7 @@ export function TransactionsTable({
                   <Link
                     aria-label={`View ${t.reference}`}
                     className="icon-button"
-                    to={`${admin ? '/admin' : '/app'}/transactions/${t.id}`}
+                    to={`${admin ? '/admin' : '/app'}/${t.type === 'REVERSAL' ? 'reversals' : 'transactions'}/${t.id}`}
                   >
                     <ArrowUpRight size={17} />
                   </Link>

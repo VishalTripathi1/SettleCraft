@@ -89,3 +89,25 @@ authRouter.post('/change-password', authenticate, async (req, res) => {
   res.clearCookie('sc_refresh', cookie);
   res.status(204).end();
 });
+
+async function sessionTiming(sessionId: string) {
+  const row = (
+    await pool.query(
+      "SELECT GREATEST(0,extract(epoch FROM (last_activity_at+($2::int*interval '1 minute')-now()))*1000)::int AS remaining_ms FROM refresh_sessions WHERE id=$1",
+      [sessionId, env.SESSION_IDLE_MINUTES],
+    )
+  ).rows[0];
+  return { remainingMs: row?.remaining_ms ?? 0, idleTimeoutMs: env.SESSION_IDLE_MINUTES * 60000 };
+}
+authRouter.get('/session', authenticate, async (_req, res) =>
+  res.json(await sessionTiming(res.locals.sessionId)),
+);
+authRouter.post('/activity', authenticate, async (_req, res) => {
+  // Explicit foreground interaction heartbeat. Polling and token refresh never touch this clock.
+  await pool.query(
+    `UPDATE refresh_sessions SET last_activity_at=now() WHERE family_id=(SELECT family_id FROM refresh_sessions WHERE id=$1)
+ AND revoked_at IS NULL AND last_activity_at>now()-($2::int*interval '1 minute')`,
+    [res.locals.sessionId, env.SESSION_IDLE_MINUTES],
+  );
+  res.json(await sessionTiming(res.locals.sessionId));
+});

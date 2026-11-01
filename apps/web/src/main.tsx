@@ -1,3 +1,4 @@
+import { ReversalRequests, ReversalRequestDetail, ReversalDetail } from './features/Reversals';
 import '@fontsource-variable/geist';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
@@ -27,6 +28,15 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/register" element={<AuthPage register />} />
             <Route element={<Shell />}>
               <Route path="/app/dashboard" element={<Dashboard />} />
+              <Route path="/app/reversal-requests" element={<ReversalRequests />} />
+              <Route path="/app/reversal-requests/:id" element={<ReversalRequestDetail />} />
+              <Route path="/admin/reversal-requests" element={<ReversalRequests admin />} />
+              <Route
+                path="/admin/reversal-requests/:id"
+                element={<ReversalRequestDetail admin />}
+              />
+              <Route path="/app/reversals/:id" element={<ReversalDetail />} />
+              <Route path="/admin/reversals/:id" element={<ReversalDetail />} />
               <Route path="/app/send" element={<Send />} />
               <Route path="/app/transactions" element={<Transactions />} />
               <Route path="/app/transactions/:id" element={<TransactionDetail />} />

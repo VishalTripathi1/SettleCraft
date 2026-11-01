@@ -8,11 +8,21 @@ export function Dashboard() {
   const { user } = useAuth();
   const wallet = useQuery({
     queryKey: ['wallet'],
-    queryFn: () => api<{ balance: string; status: string; wallet_id: string }>('/wallets/me'),
+    refetchInterval: 5000,
+    queryFn: () =>
+      api<{
+        balance: string;
+        available_balance?: string;
+        reserved_balance?: string;
+        reversal_obligation?: string;
+        queued_reversals?: number;
+        status: string;
+        wallet_id: string;
+      }>('/wallets/me'),
   });
   const transfers = useQuery({
     queryKey: ['transfers', 'recent'],
-    queryFn: () => api<List>('/transfers'),
+    queryFn: () => api<List>('/history'),
   });
   const ledger = useQuery({
     queryKey: ['ledger'],
@@ -41,12 +51,28 @@ export function Dashboard() {
             <span className="currency-badge">INR</span>
           </div>
           <div
-            className={`balance motion-enter ${wallet.data && money(wallet.data.balance).length > 13 ? 'balance-long' : ''}`}
+            className={`balance motion-enter ${wallet.data && money(wallet.data.available_balance ?? wallet.data.balance).length > 13 ? 'balance-long' : ''}`}
             key={wallet.data?.balance}
           >
-            {wallet.isPending ? '…' : wallet.data ? money(wallet.data.balance) : 'Unavailable'}
+            {wallet.isPending
+              ? '…'
+              : wallet.data
+                ? money(wallet.data.available_balance ?? wallet.data.balance)
+                : 'Unavailable'}
           </div>
           <p className="wallet-caption">Demo funds available to send</p>
+          {!!wallet.data?.queued_reversals && (
+            <div className="wallet-reservation">
+              <strong>
+                {money(wallet.data.reserved_balance ?? '0')} reserved for queued refunds
+              </strong>
+              <p>
+                {wallet.data.queued_reversals} approved refund
+                {wallet.data.queued_reversals === 1 ? '' : 's'} awaiting settlement. Ledger balance:{' '}
+                {money(wallet.data.balance)}. Incoming funds count toward the refund automatically.
+              </p>
+            </div>
+          )}
           <div className="wallet-actions">
             <Link className="button" to="/app/send">
               Send money <ArrowUpRight size={17} />

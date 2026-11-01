@@ -70,3 +70,11 @@ Server enforces admin roles. Users cannot fetch another user's transfer unless t
 Run `npm run worker` separately, or use `npm run dev` which includes it. The worker POSTs only to the loopback demo receiver. HMAC-SHA256 signs `timestamp.rawBody`; timestamp tolerance is five minutes. Receiver verifies the event exists in the outbox and stores one immutable receipt. Duplicate signed events return `{accepted:true,duplicate:true}` without applying an action twice.
 
 Delivery never changes balances. Failed attempts retry with exponential delay, maximum 10 attempts. Exhausted events remain visible for diagnosis; automatic retry stops. There is no general arbitrary-URL webhook feature, avoiding SSRF and external data transmission. A production dead-letter/requeue workflow is future work.
+
+## Reversal requests, history and OTP (policy 2.0)
+
+See [the detailed API contract](REVERSALS_AND_OTP.md#api-additions-prefix-apiv1) and the generated `/api/v1/docs` for the new routes. `/transfers` remains transfer-only; `/history` is the combined paginated feed. `/admin/overview` additionally returns `pendingReversals`. Transfer detail additionally returns `reversal_eligible` and `reversal_request_eligible` (request eligibility does not require currently sufficient funds). Payment status now includes `PENDING_VERIFICATION`; risk action includes `VERIFY`.
+
+Queued-refund/session additions: reversal status also includes `QUEUED`; request `notes` is required (5–1,000 trimmed characters). `GET /admin/request-counts` supplies sidebar counts. Wallet detail preserves ledger `balance` and adds spendable/reserved amounts and queued obligations. `GET /auth/session` reports the idle deadline; `POST /auth/activity` renews it only for an active session. Ordinary polling and refresh rotation do not extend the default 15-minute idle timeout.
+
+Pending verification payments become `FAILED` 15 minutes after creation with a readable `failure_reason`; requesting a new OTP does not extend the payment deadline. Expiry is enforced by both the worker and OTP send/confirm handlers. Expiry never posts a ledger journal.
